@@ -1,4 +1,4 @@
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=0
 path=./drive/MyDrive/msc-val
 if [ ! -d "$path/logs" ]; then
     mkdir $path/logs -p
