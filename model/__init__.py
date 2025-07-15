@@ -1,11 +1,3 @@
-from .Transformer import Model as Transformer
-from .Informer import Model as Informer
-from .Reformer import Model as Reformer
-from .Flowformer import Model as Flowformer
-from .Flashformer import Model as Flashformer
-from .iTransformer import Model as iTransformer
-from .iInformer import Model as iInformer
-from .iReformer import Model as iReformer
-from .iFlowformer import Model as iFlowformer
-from .iFlashformer import Model as iFlashformer
-from .iPatchTransformer import Model as iPatchTransformer
+from . import Transformer, Informer, Reformer, Flowformer, Flashformer
+from . import iTransformer, iInformer, iReformer, iFlowformer, iFlashformer
+from . import iPatchTransformer
