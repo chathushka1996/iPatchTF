@@ -296,8 +296,8 @@ class EnhancedPatchTST(nn.Module):
         self.pred_len = config.pred_len
         self.enc_in = len(config.feature_cols) + len(config.time_cols)
         
-        # RevIN for better normalization
-        self.revin = RevIN(self.enc_in)
+        # RevIN will be built dynamically in forward
+        self.revin = None
         
         # Core PatchTST
         self.patchtst = PatchTST(config)
@@ -310,6 +310,9 @@ class EnhancedPatchTST(nn.Module):
         """
         Enhanced forward pass with residual connections
         """
+        # Dynamically build RevIN to match input feature dim
+        if self.revin is None or self.revin.num_features != x.shape[-1]:
+            self.revin = RevIN(x.shape[-1]).to(x.device)
         # Store original for residual connection
         x_orig = x.clone()
         
