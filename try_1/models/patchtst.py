@@ -307,6 +307,12 @@ class EnhancedPatchTST(nn.Module):
         last_values = x_orig[:, -1:, -1:]  # [B, 1, 1] - last value of target
         residual_output = last_values.repeat(1, self.pred_len, 1)  # [B, pred_len, 1]
         
+        # Ensure both are [B, pred_len, 1]
+        if patch_output.shape[-1] > 1:
+            patch_output = patch_output[..., 0:1]
+        if residual_output.shape[-1] > 1:
+            residual_output = residual_output[..., 0:1]
+        
         # Combine outputs
         combined = torch.cat([patch_output, residual_output], dim=-1)  # [B, pred_len, 2]
         output = self.output_projection(combined)  # [B, pred_len, 1]
