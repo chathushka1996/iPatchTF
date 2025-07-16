@@ -235,8 +235,6 @@ class HybridSolarModel(nn.Module):
         self.config = FusionConfig(config)
         self.seq_len = config.seq_len
         self.pred_len = config.pred_len
-        
-        # We'll set enc_in dynamically in forward()
         self.d_model = getattr(self.config, 'd_model', 512)
         self.fusion_hidden_dim = getattr(self.config, 'fusion_hidden_dim', 256)
         self.num_experts = getattr(self.config, 'num_experts', 4)
@@ -244,15 +242,14 @@ class HybridSolarModel(nn.Module):
         self.use_uncertainty = getattr(self.config, 'use_uncertainty_estimation', True)
 
         # Core models
-        self.autoformer = self._create_autoformer()
+        self.autoformer = None  # Will be built dynamically in build_layers
         self.patchtst = EnhancedPatchTST(config)
-        
-        # Additional components
+
         if self.use_wavelet:
             self.wavelet_decomp = WaveletDecomposition(self.seq_len)
             self.wavelet_processor = nn.LSTM(1, 64, batch_first=True)
             self.wavelet_head = nn.Linear(64, self.pred_len)
-        
+
         # Multi-scale attention (d_model will be set after feature_extractor is built)
         self.multiscale_attention = None  # Placeholder
         self.feature_extractor = None     # Will be built on first forward
@@ -261,25 +258,6 @@ class HybridSolarModel(nn.Module):
         self.uncertainty_estimator = None # Will be built on first forward
         self.final_projection = None      # Will be built on first forward
         self.residual_projection = None   # Will be built on first forward
-
-    def _create_autoformer(self):
-        """Create Autoformer with proper configuration"""
-        # Get dimensions with fallbacks
-        enc_in = getattr(self.config, 'enc_in', 52)  # fallback based on your data
-        d_model = getattr(self.config, 'd_model', 512)  # fallback value
-        
-        # Create a simplified Autoformer-like model
-        return nn.Sequential(
-            nn.Linear(enc_in, d_model),
-            nn.GELU(),
-            nn.Dropout(0.1),
-            nn.Linear(d_model, d_model),
-            nn.GELU(),
-            nn.Dropout(0.1),
-            nn.Linear(d_model, d_model // 2),
-            nn.GELU(),
-            nn.Linear(d_model // 2, 1)
-        )
 
     def build_layers(self, enc_in):
         d_model = self.d_model
@@ -292,6 +270,18 @@ class HybridSolarModel(nn.Module):
 
         print(f"[HybridSolarModel] Detected input feature dimension: {enc_in}")
 
+        # Build autoformer with correct input dim
+        self.autoformer = nn.Sequential(
+            nn.Linear(enc_in, d_model),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(d_model, d_model),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(d_model, d_model // 2),
+            nn.GELU(),
+            nn.Linear(d_model // 2, 1)
+        )
         self.feature_extractor = nn.Sequential(
             nn.Linear(enc_in, d_model),
             nn.GELU(),
