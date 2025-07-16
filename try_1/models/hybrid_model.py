@@ -322,6 +322,7 @@ class HybridSolarModel(nn.Module):
         if self.feature_extractor is None:
             enc_in = x.shape[-1]
             self.build_layers(enc_in)
+            self.to(x.device)  # Ensure all layers are on the same device as input
 
         B, L, C = x.shape
         device = x.device
