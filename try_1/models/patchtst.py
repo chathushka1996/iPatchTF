@@ -15,6 +15,7 @@ class PatchEmbedding(nn.Module):
         self.patch_size = patch_size
         self.stride = stride
         self.padding = padding
+        self.in_chans = in_chans  # Store for dynamic checks
         
         # Calculate number of patches
         patch_num = int((seq_len + 2 * padding - patch_size) / stride + 1)
@@ -169,7 +170,6 @@ class PatchTST(nn.Module):
     """
     def __init__(self, config):
         super(PatchTST, self).__init__()
-        
         self.seq_len = config.seq_len
         self.pred_len = config.pred_len
         self.patch_size = config.patch_size
@@ -179,27 +179,10 @@ class PatchTST(nn.Module):
         self.e_layers = config.e_layers
         self.d_ff = config.d_ff
         self.dropout = config.dropout
-        
-        # Input dimensions
-        self.enc_in = len(config.feature_cols) + len(config.time_cols)  # All input features
-        
-        # Calculate padding for patch embedding
+        self.enc_in = len(config.feature_cols) + len(config.time_cols)
         self.padding = (self.patch_size - self.stride) // 2
-        
-        # Patch embedding
-        self.patch_embedding = PatchEmbedding(
-            seq_len=self.seq_len,
-            patch_size=self.patch_size,
-            stride=self.stride,
-            padding=self.padding,
-            in_chans=self.enc_in,
-            embed_dim=self.d_model
-        )
-        
-        # Positional encoding
+        self.patch_embedding = None  # Will be built dynamically
         self.pos_encoding = PositionalEncoding(self.d_model)
-        
-        # Transformer encoder
         encoder_layer = TransformerEncoderLayer(
             d_model=self.d_model,
             n_heads=self.n_heads,
@@ -207,35 +190,30 @@ class PatchTST(nn.Module):
             dropout=self.dropout
         )
         self.transformer_encoder = TransformerEncoder(encoder_layer, self.e_layers)
-        
-        # Head for prediction
-        self.head = nn.Linear(self.patch_embedding.patch_num * self.d_model, self.pred_len)
-        
-        # Dropout
+        self.head = nn.Linear(None, self.pred_len)  # Will be rebuilt dynamically
         self.dropout_layer = nn.Dropout(self.dropout)
 
     def forward(self, x):
-        """
-        x: [B, L, C] where B=batch, L=seq_len, C=features
-        Output: [B, pred_len, 1] for univariate prediction
-        """
         B, L, C = x.shape
-        
-        # Patch embedding
+        # Dynamically build patch_embedding and head
+        if self.patch_embedding is None or self.patch_embedding.in_chans != C:
+            self.patch_embedding = PatchEmbedding(
+                seq_len=self.seq_len,
+                patch_size=self.patch_size,
+                stride=self.stride,
+                padding=self.padding,
+                in_chans=C,
+                embed_dim=self.d_model
+            ).to(x.device)
+            patch_num = self.patch_embedding.patch_num
+            self.head = nn.Linear(patch_num * self.d_model, self.pred_len).to(x.device)
         x = self.patch_embedding(x)  # [B, N, D]
-        
-        # Add positional encoding
         x = self.pos_encoding(x)
         x = self.dropout_layer(x)
-        
-        # Transformer encoding
         x = self.transformer_encoder(x)  # [B, N, D]
-        
-        # Flatten and predict
         x = x.reshape(B, -1)  # [B, N*D]
         x = self.head(x)  # [B, pred_len]
         x = x.unsqueeze(-1)  # [B, pred_len, 1]
-        
         return x
 
 class RevIN(nn.Module):
