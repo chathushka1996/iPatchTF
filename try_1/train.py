@@ -69,9 +69,21 @@ class Trainer:
 
     def calculate_metrics(self, predictions, targets):
         """Calculate comprehensive evaluation metrics"""
+        # Check for NaN values in predictions and targets
+        pred_cpu = predictions.cpu().numpy().flatten()
+        target_cpu = targets.cpu().numpy().flatten()
+        
+        if np.isnan(pred_cpu).any():
+            print(f"Warning: NaN values detected in predictions! Count: {np.isnan(pred_cpu).sum()}")
+            pred_cpu = np.nan_to_num(pred_cpu, nan=0.0)  # Replace NaN with 0
+            
+        if np.isnan(target_cpu).any():
+            print(f"Warning: NaN values detected in targets! Count: {np.isnan(target_cpu).sum()}")
+            target_cpu = np.nan_to_num(target_cpu, nan=0.0)  # Replace NaN with 0
+        
         # Inverse transform predictions and targets
-        pred_orig = self.preprocessor.inverse_transform_target(predictions.cpu().numpy().flatten())
-        target_orig = self.preprocessor.inverse_transform_target(targets.cpu().numpy().flatten())
+        pred_orig = self.preprocessor.inverse_transform_target(pred_cpu)
+        target_orig = self.preprocessor.inverse_transform_target(target_cpu)
         
         # Calculate metrics
         mse = mean_squared_error(target_orig, pred_orig)

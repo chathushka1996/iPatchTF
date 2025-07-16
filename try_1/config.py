@@ -7,7 +7,7 @@ class Config:
     
     # Time series parameters
     seq_len = 96  # Input sequence length (24 hours = 96 * 15min intervals)
-    pred_len = 24  # Prediction length (6 hours = 24 * 15min intervals)
+    pred_len = 96  # Prediction length (24 hours = 96 * 15min intervals)
     
     # Model parameters
     d_model = 512
@@ -31,7 +31,7 @@ class Config:
     
     # Training parameters
     batch_size = 32
-    learning_rate = 1e-4
+    learning_rate = 5e-5  # Reduced for more stable training
     num_epochs = 100
     patience = 15
     

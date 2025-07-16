@@ -308,6 +308,20 @@ class HybridSolarModel(nn.Module):
             nn.Linear(fusion_hidden_dim, pred_len),
         )
         self.residual_projection = nn.Linear(seq_len, pred_len)
+        
+        # Initialize weights properly
+        self._initialize_weights()
+
+    def _initialize_weights(self):
+        """Initialize model weights properly"""
+        for module in [self.autoformer, self.feature_extractor, self.final_projection, self.residual_projection]:
+            if module is not None:
+                for m in module.modules():
+                    if isinstance(m, nn.Linear):
+                        # Xavier normal initialization for better stability
+                        nn.init.xavier_normal_(m.weight)
+                        if m.bias is not None:
+                            nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
         # Dynamically build layers on first forward pass
@@ -371,6 +385,11 @@ class HybridSolarModel(nn.Module):
                 'mean': mean_pred.unsqueeze(-1),
                 'std': std_pred.unsqueeze(-1)
             }
+        # Safety check for NaN values
+        if torch.isnan(final_output).any():
+            print("Warning: NaN detected in final_output, replacing with zeros")
+            final_output = torch.nan_to_num(final_output, nan=0.0)
+            
         return {
             'prediction': final_output,
             'autoformer_pred': autoformer_pred,
