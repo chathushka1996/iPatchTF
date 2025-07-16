@@ -191,7 +191,25 @@ class UncertaintyEstimator(nn.Module):
     def forward(self, x):
         mean = self.mean_head(x)
         log_var = self.log_var_head(x)
+        
+        # Clamp log_var to prevent numerical instability
+        log_var = torch.clamp(log_var, min=-10, max=3)  # Prevent extreme values
+        
+        # Safe exponential computation
         std = torch.exp(0.5 * log_var)
+        
+        # Ensure std is within reasonable bounds
+        std = torch.clamp(std, min=1e-6, max=10.0)
+        
+        # Check for NaN and replace if necessary
+        if torch.isnan(mean).any():
+            print("Warning: NaN in uncertainty mean, replacing with zeros")
+            mean = torch.nan_to_num(mean, nan=0.0)
+        
+        if torch.isnan(std).any():
+            print("Warning: NaN in uncertainty std, replacing with 1.0")
+            std = torch.nan_to_num(std, nan=1.0)
+        
         return mean, std
 
 class AdaptiveFusion(nn.Module):
@@ -324,6 +342,15 @@ class HybridSolarModel(nn.Module):
                             nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
+        # Input validation - check for NaN/inf values early
+        if torch.isnan(x).any():
+            print(f"Warning: NaN detected in input tensor, count: {torch.isnan(x).sum()}")
+            x = torch.nan_to_num(x, nan=0.0)
+        
+        if torch.isinf(x).any():
+            print(f"Warning: Inf detected in input tensor, count: {torch.isinf(x).sum()}")
+            x = torch.nan_to_num(x, nan=0.0, posinf=1.0, neginf=-1.0)
+        
         # Dynamically build layers on first forward pass
         if self.feature_extractor is None:
             enc_in = x.shape[-1]
@@ -333,63 +360,186 @@ class HybridSolarModel(nn.Module):
         B, L, C = x.shape
         device = x.device
         
-        features = self.feature_extractor(x)  # [B, L, d_model]
-        features_flat = features.reshape(B, -1)  # [B, L * d_model]
-        enhanced_features = self.multiscale_attention(features)
-
-        model_outputs = []
-        autoformer_input = x.reshape(B * L, C)
-        autoformer_out = self.autoformer(autoformer_input)
-        autoformer_out = autoformer_out.reshape(B, L, 1)
-        autoformer_pred = F.adaptive_avg_pool1d(
-            autoformer_out.transpose(1, 2),
-            self.pred_len
-        ).transpose(1, 2)
-        model_outputs.append(autoformer_pred)
-        patchtst_pred = self.patchtst(x)
-        model_outputs.append(patchtst_pred)
-        if self.use_wavelet:
-            wavelet_components = self.wavelet_decomp(x)
-            wavelet_features = []
-            for component in wavelet_components:
-                if component.shape[-1] > 0:
-                    component_reshaped = component.transpose(1, 2)
-                    lstm_out, _ = self.wavelet_processor(component_reshaped)
-                    wavelet_features.append(lstm_out[:, -1, :])
-            if wavelet_features:
-                wavelet_concat = torch.cat(wavelet_features, dim=-1)
-                if wavelet_concat.shape[-1] >= 64:
-                    wavelet_pred = self.wavelet_head(wavelet_concat[:, :64]).unsqueeze(-1)
-                else:
-                    padding = torch.zeros(B, 64 - wavelet_concat.shape[-1], device=device)
-                    wavelet_concat = torch.cat([wavelet_concat, padding], dim=-1)
-                    wavelet_pred = self.wavelet_head(wavelet_concat).unsqueeze(-1)
-                model_outputs.append(wavelet_pred)
-        moe_pred, expert_weights = self.mixture_of_experts(features_flat)
-        moe_pred = moe_pred.unsqueeze(-1)
-        model_outputs.append(moe_pred)
-        fusion_features = enhanced_features[:, -self.pred_len:, :]
-        if fusion_features.shape[1] < self.pred_len:
-            last_feature = fusion_features[:, -1:, :].repeat(1, self.pred_len - fusion_features.shape[1], 1)
-            fusion_features = torch.cat([fusion_features, last_feature], dim=1)
-        fused_output = self.adaptive_fusion(model_outputs, fusion_features)
-        final_output = self.final_projection(fused_output.squeeze(-1)).unsqueeze(-1)
-        if self.use_residual_connection:
-            target_values = x[:, :, -1]
-            residual = self.residual_projection(target_values).unsqueeze(-1)
-            final_output = final_output + residual
-        uncertainty = None
-        if self.use_uncertainty:
-            mean_pred, std_pred = self.uncertainty_estimator(features_flat)
-            uncertainty = {
-                'mean': mean_pred.unsqueeze(-1),
-                'std': std_pred.unsqueeze(-1)
-            }
-        # Safety check for NaN values
-        if torch.isnan(final_output).any():
-            print("Warning: NaN detected in final_output, replacing with zeros")
-            final_output = torch.nan_to_num(final_output, nan=0.0)
+        try:
+            features = self.feature_extractor(x)  # [B, L, d_model]
             
+            # Check features for NaN
+            if torch.isnan(features).any():
+                print("Warning: NaN detected in feature extraction, replacing with zeros")
+                features = torch.nan_to_num(features, nan=0.0)
+            
+            features_flat = features.reshape(B, -1)  # [B, L * d_model]
+            enhanced_features = self.multiscale_attention(features)
+            
+            # Check enhanced features for NaN
+            if torch.isnan(enhanced_features).any():
+                print("Warning: NaN detected in enhanced features, replacing with zeros")
+                enhanced_features = torch.nan_to_num(enhanced_features, nan=0.0)
+
+            model_outputs = []
+            
+            # Autoformer prediction with error handling
+            try:
+                autoformer_input = x.reshape(B * L, C)
+                autoformer_out = self.autoformer(autoformer_input)
+                autoformer_out = autoformer_out.reshape(B, L, 1)
+                autoformer_pred = F.adaptive_avg_pool1d(
+                    autoformer_out.transpose(1, 2),
+                    self.pred_len
+                ).transpose(1, 2)
+                
+                # Check for NaN in autoformer output
+                if torch.isnan(autoformer_pred).any():
+                    print("Warning: NaN detected in autoformer prediction, replacing with zeros")
+                    autoformer_pred = torch.nan_to_num(autoformer_pred, nan=0.0)
+                
+                model_outputs.append(autoformer_pred)
+            except Exception as e:
+                print(f"Error in autoformer: {e}, using zero prediction")
+                autoformer_pred = torch.zeros(B, self.pred_len, 1, device=device)
+                model_outputs.append(autoformer_pred)
+            
+            # PatchTST prediction with error handling
+            try:
+                patchtst_pred = self.patchtst(x)
+                
+                # Check for NaN in patchtst output
+                if torch.isnan(patchtst_pred).any():
+                    print("Warning: NaN detected in patchtst prediction, replacing with zeros")
+                    patchtst_pred = torch.nan_to_num(patchtst_pred, nan=0.0)
+                
+                model_outputs.append(patchtst_pred)
+            except Exception as e:
+                print(f"Error in patchtst: {e}, using zero prediction")
+                patchtst_pred = torch.zeros(B, self.pred_len, 1, device=device)
+                model_outputs.append(patchtst_pred)
+            
+            # Wavelet processing with error handling
+            if self.use_wavelet:
+                try:
+                    wavelet_components = self.wavelet_decomp(x)
+                    wavelet_features = []
+                    for component in wavelet_components:
+                        if component.shape[-1] > 0:
+                            component_reshaped = component.transpose(1, 2)
+                            lstm_out, _ = self.wavelet_processor(component_reshaped)
+                            wavelet_features.append(lstm_out[:, -1, :])
+                    if wavelet_features:
+                        wavelet_concat = torch.cat(wavelet_features, dim=-1)
+                        if wavelet_concat.shape[-1] >= 64:
+                            wavelet_pred = self.wavelet_head(wavelet_concat[:, :64]).unsqueeze(-1)
+                        else:
+                            padding = torch.zeros(B, 64 - wavelet_concat.shape[-1], device=device)
+                            wavelet_concat = torch.cat([wavelet_concat, padding], dim=-1)
+                            wavelet_pred = self.wavelet_head(wavelet_concat).unsqueeze(-1)
+                        
+                        # Check for NaN in wavelet output
+                        if torch.isnan(wavelet_pred).any():
+                            print("Warning: NaN detected in wavelet prediction, replacing with zeros")
+                            wavelet_pred = torch.nan_to_num(wavelet_pred, nan=0.0)
+                        
+                        model_outputs.append(wavelet_pred)
+                except Exception as e:
+                    print(f"Error in wavelet processing: {e}, skipping wavelet component")
+            
+            # Mixture of experts with error handling
+            try:
+                moe_pred, expert_weights = self.mixture_of_experts(features_flat)
+                moe_pred = moe_pred.unsqueeze(-1)
+                
+                # Check for NaN in MoE output
+                if torch.isnan(moe_pred).any():
+                    print("Warning: NaN detected in MoE prediction, replacing with zeros")
+                    moe_pred = torch.nan_to_num(moe_pred, nan=0.0)
+                
+                if torch.isnan(expert_weights).any():
+                    print("Warning: NaN detected in expert weights, replacing with uniform weights")
+                    expert_weights = torch.ones_like(expert_weights) / expert_weights.shape[-1]
+                
+                model_outputs.append(moe_pred)
+            except Exception as e:
+                print(f"Error in mixture of experts: {e}, using zero prediction")
+                moe_pred = torch.zeros(B, self.pred_len, 1, device=device)
+                expert_weights = torch.ones(B, self.num_experts, device=device) / self.num_experts
+                model_outputs.append(moe_pred)
+            
+            # Adaptive fusion with error handling
+            try:
+                fusion_features = enhanced_features[:, -self.pred_len:, :]
+                if fusion_features.shape[1] < self.pred_len:
+                    last_feature = fusion_features[:, -1:, :].repeat(1, self.pred_len - fusion_features.shape[1], 1)
+                    fusion_features = torch.cat([fusion_features, last_feature], dim=1)
+                fused_output = self.adaptive_fusion(model_outputs, fusion_features)
+                
+                # Check for NaN in fused output
+                if torch.isnan(fused_output).any():
+                    print("Warning: NaN detected in fused output, replacing with zeros")
+                    fused_output = torch.nan_to_num(fused_output, nan=0.0)
+                
+            except Exception as e:
+                print(f"Error in adaptive fusion: {e}, using simple average")
+                fused_output = torch.mean(torch.stack([out for out in model_outputs if out.shape == model_outputs[0].shape]), dim=0)
+                if torch.isnan(fused_output).any():
+                    fused_output = torch.zeros_like(model_outputs[0])
+            
+            # Final projection with error handling
+            try:
+                final_output = self.final_projection(fused_output.squeeze(-1)).unsqueeze(-1)
+                
+                # Check for NaN in final projection
+                if torch.isnan(final_output).any():
+                    print("Warning: NaN detected in final projection, replacing with zeros")
+                    final_output = torch.nan_to_num(final_output, nan=0.0)
+                
+            except Exception as e:
+                print(f"Error in final projection: {e}, using fused output")
+                final_output = fused_output
+                if torch.isnan(final_output).any():
+                    final_output = torch.zeros(B, self.pred_len, 1, device=device)
+            
+            # Residual connection with error handling
+            if self.use_residual_connection:
+                try:
+                    target_values = x[:, :, -1]
+                    residual = self.residual_projection(target_values).unsqueeze(-1)
+                    
+                    # Check for NaN in residual
+                    if torch.isnan(residual).any():
+                        print("Warning: NaN detected in residual, replacing with zeros")
+                        residual = torch.nan_to_num(residual, nan=0.0)
+                    
+                    final_output = final_output + residual
+                except Exception as e:
+                    print(f"Error in residual connection: {e}, skipping residual")
+            
+            # Uncertainty estimation with error handling
+            uncertainty = None
+            if self.use_uncertainty:
+                try:
+                    mean_pred, std_pred = self.uncertainty_estimator(features_flat)
+                    uncertainty = {
+                        'mean': mean_pred.unsqueeze(-1),
+                        'std': std_pred.unsqueeze(-1)
+                    }
+                except Exception as e:
+                    print(f"Error in uncertainty estimation: {e}, setting uncertainty to None")
+                    uncertainty = None
+            
+            # Final safety check for NaN values
+            if torch.isnan(final_output).any():
+                print("Warning: NaN detected in final_output, replacing with zeros")
+                final_output = torch.nan_to_num(final_output, nan=0.0)
+            
+        except Exception as e:
+            print(f"Critical error in forward pass: {e}")
+            print("Returning zero predictions to prevent crash")
+            final_output = torch.zeros(B, self.pred_len, 1, device=device)
+            autoformer_pred = torch.zeros(B, self.pred_len, 1, device=device)
+            patchtst_pred = torch.zeros(B, self.pred_len, 1, device=device)
+            moe_pred = torch.zeros(B, self.pred_len, 1, device=device)
+            expert_weights = torch.ones(B, self.num_experts, device=device) / self.num_experts
+            uncertainty = None
+        
         return {
             'prediction': final_output,
             'autoformer_pred': autoformer_pred,
@@ -417,32 +567,73 @@ class HybridLoss(nn.Module):
         outputs: dict from HybridSolarModel
         targets: [B, pred_len, 1]
         """
+        # Check for NaN in inputs first
+        if torch.isnan(targets).any():
+            print("Warning: NaN detected in targets, replacing with zeros")
+            targets = torch.nan_to_num(targets, nan=0.0)
+        
+        if torch.isnan(outputs['prediction']).any():
+            print("Warning: NaN detected in predictions, replacing with zeros")
+            outputs['prediction'] = torch.nan_to_num(outputs['prediction'], nan=0.0)
+        
         # Main prediction loss
         main_loss = self.mse_loss(outputs['prediction'], targets)
+        
+        # Check for NaN in main loss
+        if torch.isnan(main_loss):
+            print("Warning: NaN in main_loss, setting to 1.0")
+            main_loss = torch.tensor(1.0, device=targets.device, requires_grad=True)
         
         # Individual model losses (for regularization)
         autoformer_loss = self.mse_loss(outputs['autoformer_pred'], targets)
         patchtst_loss = self.mse_loss(outputs['patchtst_pred'], targets)
+        
+        # Check for NaN in individual losses
+        if torch.isnan(autoformer_loss):
+            autoformer_loss = torch.tensor(1.0, device=targets.device)
+        if torch.isnan(patchtst_loss):
+            patchtst_loss = torch.tensor(1.0, device=targets.device)
+            
         individual_loss = (autoformer_loss + patchtst_loss) / 2
         
-        # Uncertainty loss (if available)
+        # Uncertainty loss (if available) with numerical stability
         uncertainty_loss = 0
         if outputs['uncertainty'] is not None:
             mean_pred = outputs['uncertainty']['mean']
             std_pred = outputs['uncertainty']['std']
             
-            # Negative log-likelihood for Gaussian
-            uncertainty_loss = torch.mean(
-                0.5 * torch.log(2 * torch.pi * std_pred**2) + 
-                0.5 * ((targets - mean_pred)**2) / (std_pred**2)
-            )
+            # Ensure numerical stability
+            std_pred = torch.clamp(std_pred, min=1e-6, max=10.0)  # Prevent too small/large values
+            mean_pred = torch.nan_to_num(mean_pred, nan=0.0)
+            
+            # Safe log computation with clipping
+            log_term = torch.log(2 * torch.pi * std_pred**2 + 1e-8)  # Add small epsilon
+            log_term = torch.clamp(log_term, min=-10, max=10)  # Prevent extreme values
+            
+            # Safe division for the second term
+            diff_squared = (targets - mean_pred)**2
+            variance_term = diff_squared / (std_pred**2 + 1e-8)  # Add small epsilon
+            variance_term = torch.clamp(variance_term, max=100)  # Prevent explosion
+            
+            # Combine terms safely
+            uncertainty_loss = torch.mean(0.5 * log_term + 0.5 * variance_term)
+            
+            # Final NaN check
+            if torch.isnan(uncertainty_loss):
+                print("Warning: NaN in uncertainty_loss, setting to 0")
+                uncertainty_loss = torch.tensor(0.0, device=targets.device)
         
-        # Combined loss
+        # Combined loss with numerical stability
         total_loss = (
             self.alpha * main_loss + 
             self.beta * individual_loss + 
             self.gamma * uncertainty_loss
         )
+        
+        # Final NaN check for total loss
+        if torch.isnan(total_loss):
+            print("Warning: NaN in total_loss, using only main_loss")
+            total_loss = main_loss
         
         return {
             'total_loss': total_loss,

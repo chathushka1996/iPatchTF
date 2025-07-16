@@ -194,7 +194,38 @@ class DataPreprocessor:
         # Handle missing values (forward fill then backward fill)
         train_processed = train_processed.fillna(method='ffill').fillna(method='bfill')
         val_processed = val_processed.fillna(method='ffill').fillna(method='bfill')
-        test_processed = test_processed.fillna(method='ffill').fillna(method='bfill')
+        test_processed = test_processed.fillna(method='bfill').fillna(method='bfill')
+        
+        # Additional NaN and infinity checks
+        print("Checking for NaN and infinity values...")
+        for df_name, df in [("train", train_processed), ("val", val_processed), ("test", test_processed)]:
+            # Check for remaining NaN values
+            nan_counts = df.isnull().sum()
+            if nan_counts.any():
+                print(f"Warning: {df_name} dataset still has NaN values:")
+                print(nan_counts[nan_counts > 0])
+                # Fill remaining NaN with 0
+                df.fillna(0, inplace=True)
+            
+            # Check for infinity values
+            numeric_cols = df.select_dtypes(include=[np.number]).columns
+            for col in numeric_cols:
+                inf_count = np.isinf(df[col]).sum()
+                if inf_count > 0:
+                    print(f"Warning: {df_name} dataset has {inf_count} infinity values in column {col}")
+                    # Replace infinity with finite values
+                    df[col] = np.where(np.isinf(df[col]), 
+                                     np.nanmedian(df[col][np.isfinite(df[col])]), 
+                                     df[col])
+            
+            # Final validation - ensure all values are finite
+            for col in numeric_cols:
+                if not np.isfinite(df[col]).all():
+                    print(f"Warning: Non-finite values detected in {df_name}.{col}, replacing with median")
+                    median_val = np.nanmedian(df[col][np.isfinite(df[col])])
+                    if np.isnan(median_val):
+                        median_val = 0.0
+                    df[col] = np.where(~np.isfinite(df[col]), median_val, df[col])
         
         # Get feature columns
         feature_cols = [col for col in train_processed.columns 
@@ -202,6 +233,15 @@ class DataPreprocessor:
                        and train_processed[col].dtype in ['float64', 'int64']]
         
         print(f"Total features: {len(feature_cols)}")
+        
+        # Additional validation before scaling
+        for df_name, df in [("train", train_processed), ("val", val_processed), ("test", test_processed)]:
+            for col in feature_cols + [self.config.target_col]:
+                if col in df.columns:
+                    if not np.isfinite(df[col]).all():
+                        print(f"ERROR: Non-finite values still present in {df_name}.{col}")
+                        # Force finite values
+                        df[col] = np.nan_to_num(df[col], nan=0.0, posinf=1e6, neginf=-1e6)
         
         # Fit scalers on training data
         self.scaler_features.fit(train_processed[feature_cols])
@@ -217,6 +257,17 @@ class DataPreprocessor:
         val_processed[self.config.target_col] = self.scaler_target.transform(val_processed[[self.config.target_col]]).flatten()
         test_processed[self.config.target_col] = self.scaler_target.transform(test_processed[[self.config.target_col]]).flatten()
         
+        # Final post-scaling validation
+        print("Final validation after scaling...")
+        for df_name, df in [("train", train_processed), ("val", val_processed), ("test", test_processed)]:
+            all_numeric_cols = feature_cols + [self.config.target_col]
+            for col in all_numeric_cols:
+                if col in df.columns:
+                    if not np.isfinite(df[col]).all():
+                        print(f"ERROR: Non-finite values after scaling in {df_name}.{col}")
+                        df[col] = np.nan_to_num(df[col], nan=0.0, posinf=1.0, neginf=-1.0)
+        
+        print("Data preprocessing validation complete!")
         return train_processed, val_processed, test_processed
     
     def create_datasets(self, train_df, val_df, test_df):

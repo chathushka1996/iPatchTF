@@ -35,13 +35,17 @@ class Trainer:
         self.model = HybridSolarModel(config).to(self.device)
         
         # Loss function
-        self.criterion = HybridLoss()
+        self.criterion = HybridLoss(
+            alpha=config.loss_alpha,
+            beta=config.loss_beta, 
+            gamma=config.loss_gamma
+        )
         
         # Optimizer and scheduler
         self.optimizer = optim.AdamW(
             self.model.parameters(), 
             lr=config.learning_rate,
-            weight_decay=1e-5
+            weight_decay=config.weight_decay
         )
         
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
@@ -122,9 +126,15 @@ class Trainer:
             loss_dict = self.criterion(outputs, targets)
             loss = loss_dict['total_loss']
             
+            # Check for NaN or infinite loss before backward pass
+            if torch.isnan(loss) or torch.isinf(loss):
+                print(f"Warning: Invalid loss detected at batch {batch_idx}: {loss.item()}")
+                print("Skipping this batch to prevent gradient explosion")
+                continue
+            
             # Backward pass
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.config.max_grad_norm)
             self.optimizer.step()
             
             # Track metrics

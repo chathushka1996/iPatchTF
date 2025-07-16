@@ -245,7 +245,11 @@ class RevIN(nn.Module):
     def _get_statistics(self, x):
         dim2reduce = tuple(range(1, x.ndim-1))
         self.mean = torch.mean(x, dim=dim2reduce, keepdim=True).detach()
-        self.stdev = torch.sqrt(torch.var(x, dim=dim2reduce, keepdim=True, unbiased=False) + self.eps).detach()
+        variance = torch.var(x, dim=dim2reduce, keepdim=True, unbiased=False) + self.eps
+        self.stdev = torch.sqrt(variance).detach()
+        
+        # Ensure stdev is not too small to prevent numerical issues
+        self.stdev = torch.clamp(self.stdev, min=self.eps)
 
     def _normalize(self, x):
         x = x - self.mean
@@ -253,14 +257,28 @@ class RevIN(nn.Module):
         if self.affine:
             x = x * self.affine_weight
             x = x + self.affine_bias
+        
+        # Check for NaN and replace if necessary
+        if torch.isnan(x).any():
+            print("Warning: NaN detected in RevIN normalization, replacing with zeros")
+            x = torch.nan_to_num(x, nan=0.0)
+        
         return x
 
     def _denormalize(self, x):
         if self.affine:
             x = x - self.affine_bias
-            x = x / (self.affine_weight + self.eps*self.eps)
+            # Prevent division by zero
+            safe_weight = torch.clamp(self.affine_weight, min=self.eps)
+            x = x / safe_weight
         x = x * self.stdev
         x = x + self.mean
+        
+        # Check for NaN and replace if necessary
+        if torch.isnan(x).any():
+            print("Warning: NaN detected in RevIN denormalization, replacing with zeros")
+            x = torch.nan_to_num(x, nan=0.0)
+        
         return x
 
 class EnhancedPatchTST(nn.Module):

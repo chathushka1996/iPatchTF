@@ -9,13 +9,13 @@ class Config:
     seq_len = 96  # Input sequence length (24 hours = 96 * 15min intervals)
     pred_len = 96  # Prediction length (24 hours = 96 * 15min intervals)
     
-    # Model parameters
-    d_model = 512
+    # Model parameters (reduced for stability)
+    d_model = 256  # Reduced from 512 for better stability
     n_heads = 8
-    e_layers = 3  # Encoder layers
-    d_layers = 2  # Decoder layers
-    d_ff = 2048
-    dropout = 0.1
+    e_layers = 2  # Reduced from 3 for stability
+    d_layers = 1  # Reduced from 2 for stability
+    d_ff = 1024  # Reduced from 2048 for stability
+    dropout = 0.2  # Increased dropout for regularization
     
     # PatchTST parameters
     patch_size = 16
@@ -29,11 +29,25 @@ class Config:
     rolling_windows = [12, 24, 48, 96]  # 3h, 6h, 12h, 24h
     lag_features = [1, 4, 12, 24, 48, 96]  # Various lag periods
     
-    # Training parameters
-    batch_size = 32
-    learning_rate = 5e-5  # Reduced for more stable training
+    # Training parameters (more conservative)
+    batch_size = 16  # Reduced from 32 for more stable gradients
+    learning_rate = 1e-5  # Further reduced for stability
     num_epochs = 100
-    patience = 15
+    patience = 20  # Increased patience for more stable training
+    
+    # Gradient clipping and regularization
+    max_grad_norm = 0.5  # More aggressive gradient clipping
+    weight_decay = 1e-4  # Increased weight decay
+    
+    # Loss function weights (more conservative)
+    loss_alpha = 0.8  # Increased main loss weight
+    loss_beta = 0.15  # Reduced individual loss weight
+    loss_gamma = 0.05  # Reduced uncertainty loss weight
+    
+    # Numerical stability parameters
+    eps = 1e-8  # Small epsilon for numerical stability
+    min_std = 1e-6  # Minimum standard deviation for uncertainty
+    max_std = 5.0  # Maximum standard deviation for uncertainty
     
     # Device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
