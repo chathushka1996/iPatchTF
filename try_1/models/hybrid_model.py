@@ -236,65 +236,31 @@ class HybridSolarModel(nn.Module):
         self.seq_len = config.seq_len
         self.pred_len = config.pred_len
         
+        # We'll set enc_in dynamically in forward()
+        self.d_model = getattr(self.config, 'd_model', 512)
+        self.fusion_hidden_dim = getattr(self.config, 'fusion_hidden_dim', 256)
+        self.num_experts = getattr(self.config, 'num_experts', 4)
+        self.use_wavelet = getattr(self.config, 'use_wavelet', True)
+        self.use_uncertainty = getattr(self.config, 'use_uncertainty_estimation', True)
+
         # Core models
         self.autoformer = self._create_autoformer()
         self.patchtst = EnhancedPatchTST(config)
         
         # Additional components
-        if self.config.use_wavelet:
+        if self.use_wavelet:
             self.wavelet_decomp = WaveletDecomposition(self.seq_len)
             self.wavelet_processor = nn.LSTM(1, 64, batch_first=True)
             self.wavelet_head = nn.Linear(64, self.pred_len)
         
-        # Get dimensions with fallbacks
-        d_model = getattr(self.config, 'd_model', 512)
-        enc_in = getattr(self.config, 'enc_in', 52)
-        fusion_hidden_dim = getattr(self.config, 'fusion_hidden_dim', 256)
-        num_experts = getattr(self.config, 'num_experts', 4)
-        use_wavelet = getattr(self.config, 'use_wavelet', True)
-        use_uncertainty = getattr(self.config, 'use_uncertainty_estimation', True)
-        
-        # Multi-scale attention
-        self.multiscale_attention = MultiScaleAttention(d_model)
-        
-        # Feature extraction for fusion
-        self.feature_extractor = nn.Sequential(
-            nn.Linear(enc_in, d_model),
-            nn.GELU(),
-            nn.Dropout(0.1),
-            nn.Linear(d_model, d_model)
-        )
-        
-        # Mixture of experts
-        self.mixture_of_experts = ExpertMixture(
-            input_dim=d_model * self.seq_len,
-            hidden_dim=fusion_hidden_dim,
-            num_experts=num_experts,
-            pred_len=self.pred_len
-        )
-        
-        # Adaptive fusion
-        num_base_models = 3 if use_wavelet else 2
-        self.adaptive_fusion = AdaptiveFusion(num_base_models, d_model)
-        
-        # Uncertainty estimation
-        if use_uncertainty:
-            self.uncertainty_estimator = UncertaintyEstimator(
-                d_model * self.seq_len, 
-                self.pred_len
-            )
-        
-        # Final projection layers
-        self.final_projection = nn.Sequential(
-            nn.Linear(self.pred_len, self.config.fusion_hidden_dim),
-            nn.GELU(),
-            nn.Dropout(0.1),
-            nn.Linear(self.config.fusion_hidden_dim, self.pred_len),
-        )
-        
-        # Residual connection
-        if self.config.use_residual_connection:
-            self.residual_projection = nn.Linear(self.seq_len, self.pred_len)
+        # Multi-scale attention (d_model will be set after feature_extractor is built)
+        self.multiscale_attention = None  # Placeholder
+        self.feature_extractor = None     # Will be built on first forward
+        self.mixture_of_experts = None    # Will be built on first forward
+        self.adaptive_fusion = None       # Will be built on first forward
+        self.uncertainty_estimator = None # Will be built on first forward
+        self.final_projection = None      # Will be built on first forward
+        self.residual_projection = None   # Will be built on first forward
 
     def _create_autoformer(self):
         """Create Autoformer with proper configuration"""
@@ -315,94 +281,103 @@ class HybridSolarModel(nn.Module):
             nn.Linear(d_model // 2, 1)
         )
 
+    def build_layers(self, enc_in):
+        d_model = self.d_model
+        fusion_hidden_dim = self.fusion_hidden_dim
+        num_experts = self.num_experts
+        seq_len = self.seq_len
+        pred_len = self.pred_len
+        use_wavelet = self.use_wavelet
+        use_uncertainty = self.use_uncertainty
+
+        print(f"[HybridSolarModel] Detected input feature dimension: {enc_in}")
+
+        self.feature_extractor = nn.Sequential(
+            nn.Linear(enc_in, d_model),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(d_model, d_model)
+        )
+        self.multiscale_attention = MultiScaleAttention(d_model)
+        self.mixture_of_experts = ExpertMixture(
+            input_dim=d_model * seq_len,
+            hidden_dim=fusion_hidden_dim,
+            num_experts=num_experts,
+            pred_len=pred_len
+        )
+        num_base_models = 3 if use_wavelet else 2
+        self.adaptive_fusion = AdaptiveFusion(num_base_models, d_model)
+        if use_uncertainty:
+            self.uncertainty_estimator = UncertaintyEstimator(d_model * seq_len, pred_len)
+        self.final_projection = nn.Sequential(
+            nn.Linear(pred_len, fusion_hidden_dim),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(fusion_hidden_dim, pred_len),
+        )
+        self.residual_projection = nn.Linear(seq_len, pred_len)
+
     def forward(self, x):
-        """
-        Forward pass through the hybrid model
-        x: [B, seq_len, features]
-        """
+        # Dynamically build layers on first forward pass
+        if self.feature_extractor is None:
+            enc_in = x.shape[-1]
+            self.build_layers(enc_in)
+
         B, L, C = x.shape
         device = x.device
         
-        # Extract features for fusion context
         features = self.feature_extractor(x)  # [B, L, d_model]
         features_flat = features.reshape(B, -1)  # [B, L * d_model]
-        
-        # Multi-scale attention on features
         enhanced_features = self.multiscale_attention(features)
-        
-        # Model predictions
+
         model_outputs = []
-        
-        # 1. Autoformer prediction (simplified)
         autoformer_input = x.reshape(B * L, C)
-        autoformer_out = self.autoformer(autoformer_input)  # [B*L, 1]
+        autoformer_out = self.autoformer(autoformer_input)
         autoformer_out = autoformer_out.reshape(B, L, 1)
-        
-        # Project to prediction length
         autoformer_pred = F.adaptive_avg_pool1d(
-            autoformer_out.transpose(1, 2), 
+            autoformer_out.transpose(1, 2),
             self.pred_len
-        ).transpose(1, 2)  # [B, pred_len, 1]
+        ).transpose(1, 2)
         model_outputs.append(autoformer_pred)
-        
-        # 2. PatchTST prediction
-        patchtst_pred = self.patchtst(x)  # [B, pred_len, 1]
+        patchtst_pred = self.patchtst(x)
         model_outputs.append(patchtst_pred)
-        
-        # 3. Wavelet-based prediction (if enabled)
-        if self.config.use_wavelet:
+        if self.use_wavelet:
             wavelet_components = self.wavelet_decomp(x)
             wavelet_features = []
-            
             for component in wavelet_components:
                 if component.shape[-1] > 0:
-                    component_reshaped = component.transpose(1, 2)  # [B, L', 1]
+                    component_reshaped = component.transpose(1, 2)
                     lstm_out, _ = self.wavelet_processor(component_reshaped)
-                    wavelet_features.append(lstm_out[:, -1, :])  # [B, 64]
-            
+                    wavelet_features.append(lstm_out[:, -1, :])
             if wavelet_features:
-                wavelet_concat = torch.cat(wavelet_features, dim=-1)  # [B, 64*num_components]
+                wavelet_concat = torch.cat(wavelet_features, dim=-1)
                 if wavelet_concat.shape[-1] >= 64:
-                    wavelet_pred = self.wavelet_head(wavelet_concat[:, :64]).unsqueeze(-1)  # [B, pred_len, 1]
+                    wavelet_pred = self.wavelet_head(wavelet_concat[:, :64]).unsqueeze(-1)
                 else:
-                    # Pad if necessary
                     padding = torch.zeros(B, 64 - wavelet_concat.shape[-1], device=device)
                     wavelet_concat = torch.cat([wavelet_concat, padding], dim=-1)
                     wavelet_pred = self.wavelet_head(wavelet_concat).unsqueeze(-1)
                 model_outputs.append(wavelet_pred)
-        
-        # 4. Mixture of experts prediction
         moe_pred, expert_weights = self.mixture_of_experts(features_flat)
-        moe_pred = moe_pred.unsqueeze(-1)  # [B, pred_len, 1]
+        moe_pred = moe_pred.unsqueeze(-1)
         model_outputs.append(moe_pred)
-        
-        # Adaptive fusion of all predictions
-        fusion_features = enhanced_features[:, -self.pred_len:, :]  # Use last pred_len features
+        fusion_features = enhanced_features[:, -self.pred_len:, :]
         if fusion_features.shape[1] < self.pred_len:
-            # Repeat the last features if sequence is shorter
             last_feature = fusion_features[:, -1:, :].repeat(1, self.pred_len - fusion_features.shape[1], 1)
             fusion_features = torch.cat([fusion_features, last_feature], dim=1)
-        
         fused_output = self.adaptive_fusion(model_outputs, fusion_features)
-        
-        # Final processing
         final_output = self.final_projection(fused_output.squeeze(-1)).unsqueeze(-1)
-        
-        # Residual connection
-        if self.config.use_residual_connection:
-            target_values = x[:, :, -1]  # Assuming last feature is the target
+        if self.use_residual_connection:
+            target_values = x[:, :, -1]
             residual = self.residual_projection(target_values).unsqueeze(-1)
             final_output = final_output + residual
-        
-        # Uncertainty estimation
         uncertainty = None
-        if self.config.use_uncertainty_estimation:
+        if self.use_uncertainty:
             mean_pred, std_pred = self.uncertainty_estimator(features_flat)
             uncertainty = {
                 'mean': mean_pred.unsqueeze(-1),
                 'std': std_pred.unsqueeze(-1)
             }
-        
         return {
             'prediction': final_output,
             'autoformer_pred': autoformer_pred,
