@@ -246,33 +246,41 @@ class HybridSolarModel(nn.Module):
             self.wavelet_processor = nn.LSTM(1, 64, batch_first=True)
             self.wavelet_head = nn.Linear(64, self.pred_len)
         
+        # Get dimensions with fallbacks
+        d_model = getattr(self.config, 'd_model', 512)
+        enc_in = getattr(self.config, 'enc_in', 52)
+        fusion_hidden_dim = getattr(self.config, 'fusion_hidden_dim', 256)
+        num_experts = getattr(self.config, 'num_experts', 4)
+        use_wavelet = getattr(self.config, 'use_wavelet', True)
+        use_uncertainty = getattr(self.config, 'use_uncertainty_estimation', True)
+        
         # Multi-scale attention
-        self.multiscale_attention = MultiScaleAttention(self.config.d_model)
+        self.multiscale_attention = MultiScaleAttention(d_model)
         
         # Feature extraction for fusion
         self.feature_extractor = nn.Sequential(
-            nn.Linear(self.config.enc_in, self.config.d_model),
+            nn.Linear(enc_in, d_model),
             nn.GELU(),
             nn.Dropout(0.1),
-            nn.Linear(self.config.d_model, self.config.d_model)
+            nn.Linear(d_model, d_model)
         )
         
         # Mixture of experts
         self.mixture_of_experts = ExpertMixture(
-            input_dim=self.config.d_model * self.seq_len,
-            hidden_dim=self.config.fusion_hidden_dim,
-            num_experts=self.config.num_experts,
+            input_dim=d_model * self.seq_len,
+            hidden_dim=fusion_hidden_dim,
+            num_experts=num_experts,
             pred_len=self.pred_len
         )
         
         # Adaptive fusion
-        num_base_models = 3 if self.config.use_wavelet else 2
-        self.adaptive_fusion = AdaptiveFusion(num_base_models, self.config.d_model)
+        num_base_models = 3 if use_wavelet else 2
+        self.adaptive_fusion = AdaptiveFusion(num_base_models, d_model)
         
         # Uncertainty estimation
-        if self.config.use_uncertainty_estimation:
+        if use_uncertainty:
             self.uncertainty_estimator = UncertaintyEstimator(
-                self.config.d_model * self.seq_len, 
+                d_model * self.seq_len, 
                 self.pred_len
             )
         
