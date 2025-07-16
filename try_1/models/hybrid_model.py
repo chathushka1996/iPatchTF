@@ -240,6 +240,7 @@ class HybridSolarModel(nn.Module):
         self.num_experts = getattr(self.config, 'num_experts', 4)
         self.use_wavelet = getattr(self.config, 'use_wavelet', True)
         self.use_uncertainty = getattr(self.config, 'use_uncertainty_estimation', True)
+        self.use_residual_connection = getattr(self.config, 'use_residual_connection', True)
 
         # Core models
         self.autoformer = None  # Will be built dynamically in build_layers
