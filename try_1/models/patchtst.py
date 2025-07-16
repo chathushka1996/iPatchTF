@@ -190,7 +190,7 @@ class PatchTST(nn.Module):
             dropout=self.dropout
         )
         self.transformer_encoder = TransformerEncoder(encoder_layer, self.e_layers)
-        self.head = nn.Linear(None, self.pred_len)  # Will be rebuilt dynamically
+        # self.head will be built dynamically in forward
         self.dropout_layer = nn.Dropout(self.dropout)
 
     def forward(self, x):
