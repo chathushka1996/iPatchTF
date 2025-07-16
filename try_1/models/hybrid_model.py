@@ -6,15 +6,14 @@ from typing import Dict, Any
 import math
 
 # Import our custom components
-from models.autoformer import Autoformer, AutoformerConfig
+from models.autoformer import Autoformer
 from models.patchtst import EnhancedPatchTST
 
 class FusionConfig:
     """Configuration for the hybrid model"""
     def __init__(self, base_config):
-        # Base configuration
-        for key, value in vars(base_config).items():
-            setattr(self, key, value)
+        # Copy all base configuration attributes
+        self.__dict__.update(vars(base_config))
         
         # Autoformer specific
         self.enc_in = len(base_config.feature_cols) + len(base_config.time_cols)
@@ -291,14 +290,21 @@ class HybridSolarModel(nn.Module):
 
     def _create_autoformer(self):
         """Create Autoformer with proper configuration"""
-        # Create a minimal Autoformer-like model for now
-        # In practice, you'd use the full Autoformer implementation
+        # Get dimensions with fallbacks
+        enc_in = getattr(self.config, 'enc_in', 52)  # fallback based on your data
+        d_model = getattr(self.config, 'd_model', 512)  # fallback value
+        
+        # Create a simplified Autoformer-like model
         return nn.Sequential(
-            nn.Linear(self.config.enc_in, self.config.d_model),
+            nn.Linear(enc_in, d_model),
             nn.GELU(),
-            nn.Linear(self.config.d_model, self.config.d_model),
+            nn.Dropout(0.1),
+            nn.Linear(d_model, d_model),
             nn.GELU(),
-            nn.Linear(self.config.d_model, 1)
+            nn.Dropout(0.1),
+            nn.Linear(d_model, d_model // 2),
+            nn.GELU(),
+            nn.Linear(d_model // 2, 1)
         )
 
     def forward(self, x):
