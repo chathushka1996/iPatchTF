@@ -30,19 +30,19 @@ class Config:
     lag_features = [1, 4, 12, 24, 48, 96]  # Various lag periods
     
     # Training parameters (more conservative)
-    batch_size = 16  # Reduced from 32 for more stable gradients
-    learning_rate = 1e-5  # Further reduced for stability
+    batch_size = 8  # Further reduced for more stable gradients
+    learning_rate = 5e-6  # Much smaller learning rate
     num_epochs = 100
-    patience = 20  # Increased patience for more stable training
+    patience = 25  # Even more patience for stable training
     
     # Gradient clipping and regularization
-    max_grad_norm = 0.5  # More aggressive gradient clipping
-    weight_decay = 1e-4  # Increased weight decay
+    max_grad_norm = 0.1  # Very aggressive gradient clipping
+    weight_decay = 1e-3  # Stronger weight decay
     
     # Loss function weights (more conservative)
-    loss_alpha = 0.8  # Increased main loss weight
-    loss_beta = 0.15  # Reduced individual loss weight
-    loss_gamma = 0.05  # Reduced uncertainty loss weight
+    loss_alpha = 0.9  # Focus almost entirely on main loss
+    loss_beta = 0.08  # Minimal individual loss weight
+    loss_gamma = 0.02  # Minimal uncertainty loss weight
     
     # Numerical stability parameters
     eps = 1e-8  # Small epsilon for numerical stability

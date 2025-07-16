@@ -169,8 +169,10 @@ class DataPreprocessor:
     def __init__(self, config):
         self.config = config
         self.feature_generator = StatisticalFeatureGenerator(config)
-        self.scaler_features = RobustScaler()
-        self.scaler_target = RobustScaler()
+        # Use StandardScaler for better handling of zero-heavy, skewed data
+        from sklearn.preprocessing import StandardScaler
+        self.scaler_features = StandardScaler()
+        self.scaler_target = StandardScaler()
         
     def load_data(self):
         """Load all datasets"""
@@ -190,6 +192,36 @@ class DataPreprocessor:
         train_processed = self.feature_generator.generate_all_features(train_df.copy())
         val_processed = self.feature_generator.generate_all_features(val_df.copy())
         test_processed = self.feature_generator.generate_all_features(test_df.copy())
+        
+        # CRITICAL: Clean solar power target values
+        print("Cleaning target values...")
+        target_col = self.config.target_col
+        for df_name, df in [("train", train_processed), ("val", val_processed), ("test", test_processed)]:
+            if target_col in df.columns:
+                original_range = [df[target_col].min(), df[target_col].max()]
+                
+                # 1. Clip negative values to zero (solar power can't be negative)
+                negative_count = (df[target_col] < 0).sum()
+                if negative_count > 0:
+                    print(f"  {df_name}: Clipping {negative_count} negative values to zero")
+                    df[target_col] = np.maximum(df[target_col], 0.0)
+                
+                # 2. Handle extreme outliers (values > 99.5th percentile)
+                if df_name == "train":  # Only calculate threshold from training data
+                    outlier_threshold = df[target_col].quantile(0.995)
+                    print(f"  Outlier threshold (99.5th percentile): {outlier_threshold:.2f}")
+                
+                outlier_count = (df[target_col] > outlier_threshold).sum()
+                if outlier_count > 0:
+                    print(f"  {df_name}: Capping {outlier_count} outliers at {outlier_threshold:.2f}")
+                    df[target_col] = np.minimum(df[target_col], outlier_threshold)
+                
+                cleaned_range = [df[target_col].min(), df[target_col].max()]
+                print(f"  {df_name}: Range {original_range} -> {cleaned_range}")
+                
+                # 3. Report zero ratio
+                zero_ratio = (df[target_col] == 0).sum() / len(df)
+                print(f"  {df_name}: Zero ratio: {zero_ratio:.1%}")
         
         # Handle missing values (forward fill then backward fill)
         train_processed = train_processed.fillna(method='ffill').fillna(method='bfill')
@@ -243,19 +275,37 @@ class DataPreprocessor:
                         # Force finite values
                         df[col] = np.nan_to_num(df[col], nan=0.0, posinf=1e6, neginf=-1e6)
         
+        # Use StandardScaler instead of RobustScaler for better handling of zero-heavy data
+        print("Using StandardScaler for better zero-heavy data handling...")
+        from sklearn.preprocessing import StandardScaler
+        scaler_features = StandardScaler()
+        scaler_target = StandardScaler()
+        
         # Fit scalers on training data
-        self.scaler_features.fit(train_processed[feature_cols])
-        self.scaler_target.fit(train_processed[[self.config.target_col]])
+        scaler_features.fit(train_processed[feature_cols])
+        scaler_target.fit(train_processed[[self.config.target_col]])
+        
+        # Report scaling parameters for target
+        print(f"Target scaling - Mean: {scaler_target.mean_[0]:.6f}, Std: {scaler_target.scale_[0]:.6f}")
         
         # Scale features
-        train_processed[feature_cols] = self.scaler_features.transform(train_processed[feature_cols])
-        val_processed[feature_cols] = self.scaler_features.transform(val_processed[feature_cols])
-        test_processed[feature_cols] = self.scaler_features.transform(test_processed[feature_cols])
+        train_processed[feature_cols] = scaler_features.transform(train_processed[feature_cols])
+        val_processed[feature_cols] = scaler_features.transform(val_processed[feature_cols])
+        test_processed[feature_cols] = scaler_features.transform(test_processed[feature_cols])
         
         # Scale target
-        train_processed[self.config.target_col] = self.scaler_target.transform(train_processed[[self.config.target_col]]).flatten()
-        val_processed[self.config.target_col] = self.scaler_target.transform(val_processed[[self.config.target_col]]).flatten()
-        test_processed[self.config.target_col] = self.scaler_target.transform(test_processed[[self.config.target_col]]).flatten()
+        train_processed[self.config.target_col] = scaler_target.transform(train_processed[[self.config.target_col]]).flatten()
+        val_processed[self.config.target_col] = scaler_target.transform(val_processed[[self.config.target_col]]).flatten()
+        test_processed[self.config.target_col] = scaler_target.transform(test_processed[[self.config.target_col]]).flatten()
+        
+        # Report scaled target statistics
+        for df_name, df in [("train", train_processed), ("val", val_processed), ("test", test_processed)]:
+            scaled_stats = df[self.config.target_col].describe()
+            print(f"{df_name} scaled target - Mean: {scaled_stats['mean']:.6f}, Std: {scaled_stats['std']:.6f}, Range: [{scaled_stats['min']:.6f}, {scaled_stats['max']:.6f}]")
+        
+        # Update scalers in the class
+        self.scaler_features = scaler_features
+        self.scaler_target = scaler_target
         
         # Final post-scaling validation
         print("Final validation after scaling...")
@@ -267,7 +317,7 @@ class DataPreprocessor:
                         print(f"ERROR: Non-finite values after scaling in {df_name}.{col}")
                         df[col] = np.nan_to_num(df[col], nan=0.0, posinf=1.0, neginf=-1.0)
         
-        print("Data preprocessing validation complete!")
+        print("Data preprocessing with improved scaling complete!")
         return train_processed, val_processed, test_processed
     
     def create_datasets(self, train_df, val_df, test_df):

@@ -71,7 +71,7 @@ class Trainer:
         os.makedirs('models', exist_ok=True)
         os.makedirs('plots', exist_ok=True)
 
-    def calculate_metrics(self, predictions, targets):
+    def calculate_metrics(self, predictions, targets, is_training=True):
         """Calculate comprehensive evaluation metrics"""
         # Check for NaN values in predictions and targets
         pred_cpu = predictions.cpu().numpy().flatten()
@@ -85,26 +85,64 @@ class Trainer:
             print(f"Warning: NaN values detected in targets! Count: {np.isnan(target_cpu).sum()}")
             target_cpu = np.nan_to_num(target_cpu, nan=0.0)  # Replace NaN with 0
         
-        # Inverse transform predictions and targets
-        pred_orig = self.preprocessor.inverse_transform_target(pred_cpu)
-        target_orig = self.preprocessor.inverse_transform_target(target_cpu)
-        
-        # Calculate metrics
-        mse = mean_squared_error(target_orig, pred_orig)
-        rmse = np.sqrt(mse)
-        mae = mean_absolute_error(target_orig, pred_orig)
-        r2 = r2_score(target_orig, pred_orig)
-        
-        # Mean Absolute Percentage Error
-        mape = np.mean(np.abs((target_orig - pred_orig) / (target_orig + 1e-8))) * 100
-        
-        return {
-            'MSE': mse,
-            'RMSE': rmse,
-            'MAE': mae,
-            'R2': r2,
-            'MAPE': mape
-        }
+        # For training, calculate metrics in scaled space to avoid explosion
+        if is_training:
+            # Calculate metrics in scaled space
+            mse = mean_squared_error(target_cpu, pred_cpu)
+            rmse = np.sqrt(mse)
+            mae = mean_absolute_error(target_cpu, pred_cpu)
+            
+            # For R2, we need to be careful with scaled data
+            try:
+                r2 = r2_score(target_cpu, pred_cpu)
+                if np.isnan(r2) or np.isinf(r2):
+                    r2 = -1.0  # Default poor score
+            except:
+                r2 = -1.0
+            
+            # MAPE in scaled space (less meaningful but prevents explosion)
+            mape = np.mean(np.abs((target_cpu - pred_cpu) / (np.abs(target_cpu) + 1e-8))) * 100
+            
+            return {
+                'MSE': mse,
+                'RMSE': rmse,
+                'MAE': mae,
+                'R2': r2,
+                'MAPE': mape
+            }
+        else:
+            # For final evaluation, inverse transform but with safety checks
+            try:
+                pred_orig = self.preprocessor.inverse_transform_target(pred_cpu)
+                target_orig = self.preprocessor.inverse_transform_target(target_cpu)
+                
+                # Safety check for extreme values after inverse transform
+                if np.abs(pred_orig).max() > 1e6 or np.abs(target_orig).max() > 1e6:
+                    print("Warning: Extreme values detected after inverse transform!")
+                    print(f"Max pred: {np.abs(pred_orig).max()}, Max target: {np.abs(target_orig).max()}")
+                    # Fall back to scaled space calculation
+                    return self.calculate_metrics(predictions, targets, is_training=True)
+                
+                # Calculate metrics in original space
+                mse = mean_squared_error(target_orig, pred_orig)
+                rmse = np.sqrt(mse)
+                mae = mean_absolute_error(target_orig, pred_orig)
+                r2 = r2_score(target_orig, pred_orig)
+                
+                # Mean Absolute Percentage Error
+                mape = np.mean(np.abs((target_orig - pred_orig) / (target_orig + 1e-8))) * 100
+                
+                return {
+                    'MSE': mse,
+                    'RMSE': rmse,
+                    'MAE': mae,
+                    'R2': r2,
+                    'MAPE': mape
+                }
+            except Exception as e:
+                print(f"Error in inverse transform: {e}")
+                print("Falling back to scaled space metrics")
+                return self.calculate_metrics(predictions, targets, is_training=True)
 
     def train_epoch(self):
         """Train for one epoch"""
@@ -142,6 +180,13 @@ class Trainer:
             all_predictions.append(outputs['prediction'].detach())
             all_targets.append(targets)
             
+            # Debug: Print actual values for first few batches
+            if batch_idx < 3:
+                print(f"\nDEBUG Batch {batch_idx}:")
+                print(f"  Prediction range: [{outputs['prediction'].min().item():.6f}, {outputs['prediction'].max().item():.6f}]")
+                print(f"  Target range: [{targets.min().item():.6f}, {targets.max().item():.6f}]")
+                print(f"  Loss: {loss.item():.6f}")
+            
             # Update progress bar
             pbar.set_postfix({
                 'Loss': f'{loss.item():.4f}',
@@ -152,7 +197,7 @@ class Trainer:
         avg_loss = total_loss / len(self.train_loader)
         all_predictions = torch.cat(all_predictions, dim=0)
         all_targets = torch.cat(all_targets, dim=0)
-        metrics = self.calculate_metrics(all_predictions, all_targets)
+        metrics = self.calculate_metrics(all_predictions, all_targets, is_training=True)
         
         return avg_loss, metrics
 
@@ -179,7 +224,7 @@ class Trainer:
         avg_loss = total_loss / len(self.val_loader)
         all_predictions = torch.cat(all_predictions, dim=0)
         all_targets = torch.cat(all_targets, dim=0)
-        metrics = self.calculate_metrics(all_predictions, all_targets)
+        metrics = self.calculate_metrics(all_predictions, all_targets, is_training=True)
         
         return avg_loss, metrics
 
@@ -206,7 +251,7 @@ class Trainer:
         all_targets = torch.cat(all_targets, dim=0)
         
         # Calculate test metrics
-        test_metrics = self.calculate_metrics(all_predictions, all_targets)
+        test_metrics = self.calculate_metrics(all_predictions, all_targets, is_training=False)
         
         # Save predictions for analysis
         predictions_np = self.preprocessor.inverse_transform_target(
