@@ -160,7 +160,7 @@ class SolarDataset(Dataset):
     def __getitem__(self, idx):
         return {
             'input': torch.FloatTensor(self.sequences[idx]),
-            'target': torch.FloatTensor(self.targets[idx])
+            'target': torch.FloatTensor(self.targets[idx]).unsqueeze(-1)  # [pred_len, 1]
         }
 
 class DataPreprocessor:
