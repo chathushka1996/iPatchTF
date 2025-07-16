@@ -295,7 +295,8 @@ class HybridSolarModel(nn.Module):
             num_experts=num_experts,
             pred_len=pred_len
         )
-        num_base_models = 3 if use_wavelet else 2
+        # Base models: autoformer + patchtst + moe = 3, +1 if wavelet is used
+        num_base_models = 4 if use_wavelet else 3
         self.adaptive_fusion = AdaptiveFusion(num_base_models, d_model)
         if use_uncertainty:
             self.uncertainty_estimator = UncertaintyEstimator(d_model * seq_len, pred_len)
