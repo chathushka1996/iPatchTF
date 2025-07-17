@@ -9,13 +9,13 @@ class Config:
     seq_len = 96  # Input sequence length (24 hours = 96 * 15min intervals)
     pred_len = 96  # Prediction length (24 hours = 96 * 15min intervals)
     
-    # Model parameters (reduced for stability)
-    d_model = 256  # Reduced from 512 for better stability
-    n_heads = 8
-    e_layers = 2  # Reduced from 3 for stability
-    d_layers = 1  # Reduced from 2 for stability
-    d_ff = 1024  # Reduced from 2048 for stability
-    dropout = 0.2  # Increased dropout for regularization
+    # Model parameters (simplified for better convergence)
+    d_model = 128  # Much smaller model
+    n_heads = 4    # Fewer attention heads
+    e_layers = 1   # Single encoder layer
+    d_layers = 1   # Single decoder layer
+    d_ff = 256     # Smaller feed-forward dimension
+    dropout = 0.3  # Higher dropout for regularization
     
     # PatchTST parameters
     patch_size = 16
@@ -29,20 +29,20 @@ class Config:
     rolling_windows = [12, 24, 48, 96]  # 3h, 6h, 12h, 24h
     lag_features = [1, 4, 12, 24, 48, 96]  # Various lag periods
     
-    # Training parameters (more conservative)
-    batch_size = 8  # Further reduced for more stable gradients
-    learning_rate = 5e-6  # Much smaller learning rate
-    num_epochs = 100
-    patience = 25  # Even more patience for stable training
+    # Training parameters (much more conservative for MSE < 0.1)
+    batch_size = 4  # Very small batches for stable gradients
+    learning_rate = 1e-6  # Much smaller learning rate
+    num_epochs = 200  # More epochs for slow learning
+    patience = 50  # Much more patience
     
-    # Gradient clipping and regularization
-    max_grad_norm = 0.1  # Very aggressive gradient clipping
-    weight_decay = 1e-3  # Stronger weight decay
+    # Gradient clipping and regularization (more aggressive)
+    max_grad_norm = 0.05  # Very aggressive gradient clipping
+    weight_decay = 5e-3  # Stronger weight decay
     
-    # Loss function weights (more conservative)
-    loss_alpha = 0.9  # Focus almost entirely on main loss
-    loss_beta = 0.08  # Minimal individual loss weight
-    loss_gamma = 0.02  # Minimal uncertainty loss weight
+    # Loss function weights (focus almost entirely on main loss)
+    loss_alpha = 0.95  # Almost all weight on main loss
+    loss_beta = 0.04   # Minimal individual loss weight  
+    loss_gamma = 0.01  # Minimal uncertainty loss weight
     
     # Numerical stability parameters
     eps = 1e-8  # Small epsilon for numerical stability
@@ -55,3 +55,13 @@ class Config:
     # Features (excluding target and time columns)
     feature_cols = ['temp', 'dew', 'humidity', 'winddir', 'windspeed', 'pressure', 'cloudcover']
     time_cols = ['dayofyear', 'timeofday'] 
+    
+    # Model complexity control (for MSE < 0.1 target)
+    use_simple_mode = True    # Use simplified architecture
+    use_wavelet = False       # Disable wavelet (complex)
+    use_uncertainty = False   # Disable uncertainty (complex)  
+    use_residual_connection = True  # Keep residual (helpful)
+    
+    # Hybrid model components (simplified)
+    num_experts = 2          # Fewer experts (was 4)
+    fusion_hidden_dim = 64   # Smaller fusion network 

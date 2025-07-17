@@ -185,23 +185,12 @@ class Trainer:
                 print(f"\nDEBUG Batch {batch_idx}:")
                 print(f"  Prediction range: [{outputs['prediction'].min().item():.6f}, {outputs['prediction'].max().item():.6f}]")
                 print(f"  Target range: [{targets.min().item():.6f}, {targets.max().item():.6f}]")
-                print(f"  Loss (MSE): {loss.item():.6f}")
-                
-                # Calculate additional metrics for first batch
-                pred_flat = outputs['prediction'].detach().cpu().numpy().flatten()
-                target_flat = targets.detach().cpu().numpy().flatten()
-                batch_mse = np.mean((pred_flat - target_flat) ** 2)
-                batch_mae = np.mean(np.abs(pred_flat - target_flat))
-                print(f"  Batch MSE: {batch_mse:.6f}")
-                print(f"  Batch MAE: {batch_mae:.6f}")
-                print(f"  Prediction mean: {pred_flat.mean():.6f}")
-                print(f"  Target mean: {target_flat.mean():.6f}")
+                print(f"  Loss: {loss.item():.6f}")
             
-            # Update progress bar with MSE
-            current_mse = loss.item()  # Since we're using MSE loss
+            # Update progress bar
             pbar.set_postfix({
-                'MSE': f'{current_mse:.6f}',
-                'Avg_MSE': f'{total_loss/(batch_idx+1):.6f}'
+                'Loss': f'{loss.item():.4f}',
+                'Avg_Loss': f'{total_loss/(batch_idx+1):.4f}'
             })
         
         # Calculate epoch metrics
@@ -421,29 +410,10 @@ class Trainer:
             # Learning rate scheduling
             self.scheduler.step(val_loss)
             
-            # Print metrics with explicit MSE focus
-            print(f"Epoch {epoch+1}/{self.config.num_epochs} Results:")
-            print(f"  Train MSE: {train_loss:.6f} | Val MSE: {val_loss:.6f}")
-            print(f"  Train RMSE: {train_metrics['RMSE']:.6f} | Val RMSE: {val_metrics['RMSE']:.6f}")
-            print(f"  Train R2: {train_metrics['R2']:.6f} | Val R2: {val_metrics['R2']:.6f}")
-            
-            # Check if we've reached target MSE
-            if val_loss < 0.1:
-                print(f"🎯 TARGET ACHIEVED! Validation MSE < 0.1: {val_loss:.6f}")
-            elif val_loss < 0.5:
-                print(f"📈 Good progress! MSE: {val_loss:.6f} (target: 0.1)")
-            else:
-                print(f"📊 Current MSE: {val_loss:.6f} (target: 0.1, progress needed)")
-            
-            # Additional monitoring for convergence
-            if len(self.val_losses) > 1:
-                improvement = self.val_losses[-2] - val_loss
-                print(f"  MSE improvement: {improvement:.6f}")
-                
-                if improvement < 1e-6 and epoch > 10:
-                    print("⚠️  Very slow convergence - consider adjusting learning rate")
-            
-            print("-" * 60)
+            # Print metrics
+            print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
+            print(f"Train RMSE: {train_metrics['RMSE']:.4f} | Val RMSE: {val_metrics['RMSE']:.4f}")
+            print(f"Train R2: {train_metrics['R2']:.4f} | Val R2: {val_metrics['R2']:.4f}")
             
             # Save model
             is_best = val_loss < self.best_val_loss

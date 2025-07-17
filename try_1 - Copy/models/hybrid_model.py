@@ -249,52 +249,34 @@ class HybridSolarModel(nn.Module):
     Hybrid model combining Autoformer, PatchTST, and statistical features
     """
     def __init__(self, config):
-        super(HybridSolarModel, self).__init__()
-        
-        # Store configuration
-        self.config = config
+        super().__init__()
+        self.config = FusionConfig(config)
         self.seq_len = config.seq_len
         self.pred_len = config.pred_len
-        self.d_model = config.d_model
-        
-        # Simplified configuration for MSE < 0.1 target
-        self.fusion_hidden_dim = getattr(config, 'fusion_hidden_dim', 64)
-        self.num_experts = getattr(config, 'num_experts', 2)
-        self.use_wavelet = getattr(config, 'use_wavelet', False)
-        self.use_uncertainty = getattr(config, 'use_uncertainty', False) 
-        self.use_residual_connection = getattr(config, 'use_residual_connection', True)
-        self.use_simple_mode = getattr(config, 'use_simple_mode', True)
-        
-        print(f"[HybridSolarModel] Simplified mode: {self.use_simple_mode}")
-        print(f"[HybridSolarModel] Wavelet: {self.use_wavelet}, Uncertainty: {self.use_uncertainty}")
-        print(f"[HybridSolarModel] Experts: {self.num_experts}, Fusion dim: {self.fusion_hidden_dim}")
-        
-        # Initialize core components
-        self.feature_extractor = None  # Built dynamically
-        self.final_projection = None
-        self.residual_projection = None
-        
-        # Initialize individual models
-        self.autoformer = None  # Built dynamically as simple network
+        self.d_model = getattr(self.config, 'd_model', 512)
+        self.fusion_hidden_dim = getattr(self.config, 'fusion_hidden_dim', 256)
+        self.num_experts = getattr(self.config, 'num_experts', 4)
+        self.use_wavelet = getattr(self.config, 'use_wavelet', True)
+        self.use_uncertainty = getattr(self.config, 'use_uncertainty_estimation', True)
+        self.use_residual_connection = getattr(self.config, 'use_residual_connection', True)
+
+        # Core models
+        self.autoformer = None  # Will be built dynamically in build_layers
         self.patchtst = EnhancedPatchTST(config)
-        
-        # Multi-scale attention (simplified)
-        self.multiscale_attention = None  # Built dynamically
-        
-        # Mixture of experts (simplified)
-        self.mixture_of_experts = None  # Built dynamically
-        
-        # Adaptive fusion (simplified)
-        self.adaptive_fusion = None  # Built dynamically
-        
-        # Optional components (disabled in simple mode)
+
         if self.use_wavelet:
-            # Wavelet components (disabled by default)
-            pass
-        
-        if self.use_uncertainty:
-            # Uncertainty estimation (disabled by default)
-            self.uncertainty_estimator = None
+            self.wavelet_decomp = WaveletDecomposition(self.seq_len)
+            self.wavelet_processor = nn.LSTM(1, 64, batch_first=True)
+            self.wavelet_head = nn.Linear(64, self.pred_len)
+
+        # Multi-scale attention (d_model will be set after feature_extractor is built)
+        self.multiscale_attention = None  # Placeholder
+        self.feature_extractor = None     # Will be built on first forward
+        self.mixture_of_experts = None    # Will be built on first forward
+        self.adaptive_fusion = None       # Will be built on first forward
+        self.uncertainty_estimator = None # Will be built on first forward
+        self.final_projection = None      # Will be built on first forward
+        self.residual_projection = None   # Will be built on first forward
 
     def build_layers(self, enc_in):
         d_model = self.d_model
@@ -302,65 +284,51 @@ class HybridSolarModel(nn.Module):
         num_experts = self.num_experts
         seq_len = self.seq_len
         pred_len = self.pred_len
+        use_wavelet = self.use_wavelet
+        use_uncertainty = self.use_uncertainty
 
-        print(f"[HybridSolarModel] Building simplified layers for input dim: {enc_in}")
+        print(f"[HybridSolarModel] Detected input feature dimension: {enc_in}")
 
-        # Build very simple autoformer (just a feed-forward network)
+        # Build autoformer with correct input dim
         self.autoformer = nn.Sequential(
-            nn.Linear(enc_in, d_model // 2),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(d_model // 2, d_model // 4),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(d_model // 4, 1)
-        )
-        
-        # Simple feature extractor
-        self.feature_extractor = nn.Sequential(
-            nn.Linear(enc_in, d_model // 2),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(d_model // 2, d_model)
-        )
-        
-        # Simple multi-scale attention (just average pooling)
-        self.multiscale_attention = nn.Sequential(
+            nn.Linear(enc_in, d_model),
+            nn.GELU(),
+            nn.Dropout(0.1),
             nn.Linear(d_model, d_model),
-            nn.ReLU()
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(d_model, d_model // 2),
+            nn.GELU(),
+            nn.Linear(d_model // 2, 1)
         )
-        
-        # Simplified mixture of experts
+        self.feature_extractor = nn.Sequential(
+            nn.Linear(enc_in, d_model),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(d_model, d_model)
+        )
+        self.multiscale_attention = MultiScaleAttention(d_model)
         self.mixture_of_experts = ExpertMixture(
             input_dim=d_model * seq_len,
             hidden_dim=fusion_hidden_dim,
             num_experts=num_experts,
             pred_len=pred_len
         )
-        
-        # Simple adaptive fusion (just average the inputs)
-        num_base_models = 3  # autoformer + patchtst + moe
-        self.adaptive_fusion = nn.Sequential(
-            nn.Linear(num_base_models, num_base_models),
-            nn.Softmax(dim=-1)
-        )
-        
-        # Simple final projection
+        # Base models: autoformer + patchtst + moe = 3, +1 if wavelet is used
+        num_base_models = 4 if use_wavelet else 3
+        self.adaptive_fusion = AdaptiveFusion(num_base_models, d_model)
+        if use_uncertainty:
+            self.uncertainty_estimator = UncertaintyEstimator(d_model * seq_len, pred_len)
         self.final_projection = nn.Sequential(
-            nn.Linear(pred_len, pred_len // 2),
-            nn.ReLU(),
+            nn.Linear(pred_len, fusion_hidden_dim),
+            nn.GELU(),
             nn.Dropout(0.1),
-            nn.Linear(pred_len // 2, pred_len)
+            nn.Linear(fusion_hidden_dim, pred_len),
         )
-        
-        # Simple residual projection
-        if self.use_residual_connection:
-            self.residual_projection = nn.Linear(seq_len, pred_len)
+        self.residual_projection = nn.Linear(seq_len, pred_len)
         
         # Initialize weights properly
         self._initialize_weights()
-        
-        print(f"[HybridSolarModel] Simplified layers built successfully")
 
     def _initialize_weights(self):
         """Initialize model weights properly"""
@@ -501,7 +469,7 @@ class HybridSolarModel(nn.Module):
                 if fusion_features.shape[1] < self.pred_len:
                     last_feature = fusion_features[:, -1:, :].repeat(1, self.pred_len - fusion_features.shape[1], 1)
                     fusion_features = torch.cat([fusion_features, last_feature], dim=1)
-                fused_output = self.adaptive_fusion(model_outputs)
+                fused_output = self.adaptive_fusion(model_outputs, fusion_features)
                 
                 # Check for NaN in fused output
                 if torch.isnan(fused_output).any():
