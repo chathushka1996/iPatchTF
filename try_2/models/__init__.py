@@ -1,1 +1,1 @@
-from .HybridPatchAutoformer import Model as HybridPatchAutoformer
+from . import HybridPatchAutoformer
