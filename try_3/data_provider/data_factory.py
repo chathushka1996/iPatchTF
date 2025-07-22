@@ -65,7 +65,6 @@ def data_provider(args, flag):
         if args.data == 'm4':
             drop_last = False
         data_set = Data(
-            args = args,
             root_path=args.root_path,
             data_path=args.data_path,
             flag=flag,
@@ -73,8 +72,7 @@ def data_provider(args, flag):
             features=args.features,
             target=args.target,
             timeenc=timeenc,
-            freq=freq,
-            seasonal_patterns=args.seasonal_patterns
+            freq=freq
         )
         print(flag, len(data_set))
         data_loader = DataLoader(
