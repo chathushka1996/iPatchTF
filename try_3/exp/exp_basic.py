@@ -3,7 +3,7 @@ import torch
 from models import Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer, \
     Informer, LightTS, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, FiLM, iTransformer, \
     Koopa, TiDE, FreTS, TimeMixer, TSMixer, SegRNN, MambaSimple, TemporalFusionTransformer, SCINet, PAttn, TimeXer, \
-    WPMixer, MultiPatchFormer, PatchTimeXer, PatchTimeXerEnhanced
+    WPMixer, MultiPatchFormer, PatchTimeXer, PatchTimeXerEnhanced, PatchTimeXerEnhancedSimple
 
 
 class Exp_Basic(object):
@@ -39,7 +39,8 @@ class Exp_Basic(object):
             'WPMixer': WPMixer,
             'MultiPatchFormer': MultiPatchFormer,
             'PatchTimeXer': PatchTimeXer,
-            'PatchTimeXerEnhanced': PatchTimeXerEnhanced
+            'PatchTimeXerEnhanced': PatchTimeXerEnhanced,
+            'PatchTimeXerEnhancedSimple': PatchTimeXerEnhancedSimple
         }
         if args.model == 'Mamba':
             print('Please make sure you have successfully installed mamba_ssm')
