@@ -31,8 +31,8 @@ moving_avg=25       # Window for seasonal-trend decomposition
 # Training configuration
 batch_size=32       # Balanced batch size for stable training
 learning_rate=0.0001 # Conservative learning rate
-train_epochs=50     # Extended training for convergence
-patience=10         # Early stopping patience
+train_epochs=20     # Extended training for convergence
+patience=4         # Early stopping patience
 itr=1              # Number of iterations
 
 # Enhanced features configuration
