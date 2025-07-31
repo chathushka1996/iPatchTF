@@ -98,8 +98,8 @@ do
         --stride $stride \
         --moving_avg $moving_avg \
         --use_norm $use_norm \
-        --checkpoints $checkpoints \
-        > $logs_path/${model_name}_${model_id_name}_${seq_len}_${pred_len}.log 2>&1
+        # --checkpoints $checkpoints \
+        # > $logs_path/${model_name}_${model_id_name}_${seq_len}_${pred_len}.log 2>&1
         
     echo "Completed training for horizon $pred_len. Log saved to $logs_path/${model_name}_${model_id_name}_${seq_len}_${pred_len}.log"
 done
@@ -144,7 +144,7 @@ do
         --stride $stride \
         --moving_avg $moving_avg \
         --use_norm $use_norm \
-        --checkpoints $checkpoints \
+        # --checkpoints $checkpoints \
         > $logs_path/${model_name}_${model_id_name}_${seq_len}_${pred_len}_eval.log 2>&1
         
     echo "Evaluation complete for horizon $pred_len"
