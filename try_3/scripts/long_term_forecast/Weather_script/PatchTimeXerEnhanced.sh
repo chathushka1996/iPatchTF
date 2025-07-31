@@ -1,0 +1,115 @@
+export CUDA_VISIBLE_DEVICES=0
+
+model_name=PatchTimeXerEnhanced
+
+python -u run.py \
+  --task_name long_term_forecast \
+  --is_training 1 \
+  --root_path ./dataset/weather/ \
+  --data_path weather.csv \
+  --model_id weather_96_96 \
+  --model $model_name \
+  --data custom \
+  --features M \
+  --seq_len 96 \
+  --label_len 48 \
+  --pred_len 96 \
+  --e_layers 3 \
+  --factor 3 \
+  --enc_in 21 \
+  --dec_in 21 \
+  --c_out 21 \
+  --des 'Exp' \
+  --d_model 512 \
+  --d_ff 1024 \
+  --n_heads 8 \
+  --batch_size 8 \
+  --learning_rate 0.0001 \
+  --train_epochs 15 \
+  --patience 5 \
+  --dropout 0.1 \
+  --itr 1
+
+python -u run.py \
+  --task_name long_term_forecast \
+  --is_training 1 \
+  --root_path ./dataset/weather/ \
+  --data_path weather.csv \
+  --model_id weather_96_192 \
+  --model $model_name \
+  --data custom \
+  --features M \
+  --seq_len 96 \
+  --label_len 48 \
+  --pred_len 192 \
+  --e_layers 3 \
+  --factor 3 \
+  --enc_in 21 \
+  --dec_in 21 \
+  --c_out 21 \
+  --des 'Exp' \
+  --d_model 512 \
+  --d_ff 1024 \
+  --n_heads 8 \
+  --batch_size 8 \
+  --learning_rate 0.0001 \
+  --train_epochs 15 \
+  --patience 5 \
+  --dropout 0.1 \
+  --itr 1
+
+python -u run.py \
+  --task_name long_term_forecast \
+  --is_training 1 \
+  --root_path ./dataset/weather/ \
+  --data_path weather.csv \
+  --model_id weather_96_336 \
+  --model $model_name \
+  --data custom \
+  --features M \
+  --seq_len 96 \
+  --label_len 48 \
+  --pred_len 336 \
+  --e_layers 4 \
+  --factor 3 \
+  --enc_in 21 \
+  --dec_in 21 \
+  --c_out 21 \
+  --des 'Exp' \
+  --d_model 768 \
+  --d_ff 1536 \
+  --n_heads 12 \
+  --batch_size 4 \
+  --learning_rate 0.0001 \
+  --train_epochs 20 \
+  --patience 7 \
+  --dropout 0.1 \
+  --itr 1
+
+python -u run.py \
+  --task_name long_term_forecast \
+  --is_training 1 \
+  --root_path ./dataset/weather/ \
+  --data_path weather.csv \
+  --model_id weather_96_720 \
+  --model $model_name \
+  --data custom \
+  --features M \
+  --seq_len 96 \
+  --label_len 48 \
+  --pred_len 720 \
+  --e_layers 4 \
+  --factor 3 \
+  --enc_in 21 \
+  --dec_in 21 \
+  --c_out 21 \
+  --des 'Exp' \
+  --d_model 768 \
+  --d_ff 1536 \
+  --n_heads 12 \
+  --batch_size 2 \
+  --learning_rate 0.00005 \
+  --train_epochs 25 \
+  --patience 10 \
+  --dropout 0.15 \
+  --itr 1 
