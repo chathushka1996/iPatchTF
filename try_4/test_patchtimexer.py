@@ -149,6 +149,13 @@ def test_component_integration():
         output = global_ctx(patch_emb)
         print(f"✓ GlobalContextLayer: {patch_emb.shape} -> {output.shape}")
         
+        # Test AdaptiveForecastHead
+        forecast_head = AdaptiveForecastHead(n_vars=10, pred_len=96)
+        seasonal_emb = torch.randn(2, 10, 256, 12)  # [B, N, D, L]
+        trend_emb = torch.randn(2, 10, 256, 12)     # [B, N, D, L]
+        output = forecast_head(seasonal_emb, trend_emb)
+        print(f"✓ AdaptiveForecastHead: {seasonal_emb.shape} -> {output.shape}")
+        
         print("✓ All component tests passed")
         return True
         

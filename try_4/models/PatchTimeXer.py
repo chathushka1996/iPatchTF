@@ -172,31 +172,46 @@ class AdaptiveForecastHead(nn.Module):
     """
     Adaptive forecasting head with multi-scale prediction
     """
-    def __init__(self, n_vars, d_model, patch_num, pred_len, dropout=0.1):
+    def __init__(self, n_vars, pred_len, dropout=0.1):
         super(AdaptiveForecastHead, self).__init__()
         self.n_vars = n_vars
         self.pred_len = pred_len
+        self.dropout = nn.Dropout(dropout)
         
-        # Multi-scale prediction layers
+        # Add a dummy parameter to ensure device detection works
+        self.dummy_param = nn.Parameter(torch.zeros(1))
+        
+        # These will be initialized dynamically on first forward pass
+        self.seasonal_head = None
+        self.trend_head = None
+        self.weight_net = None
+        self.initialized = False
+        
+    def _initialize_layers(self, input_dim):
+        """Initialize layers dynamically based on actual input dimensions"""
         self.seasonal_head = nn.Sequential(
-            nn.Flatten(start_dim=-2),
-            nn.Linear(d_model * (patch_num + 1), pred_len),
-            nn.Dropout(dropout)
-        )
+            nn.Linear(input_dim, input_dim // 4),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(input_dim // 4, self.pred_len)
+        ).to(next(self.parameters()).device)
         
         self.trend_head = nn.Sequential(
-            nn.Flatten(start_dim=-2),
-            nn.Linear(d_model * (patch_num + 1), pred_len),
-            nn.Dropout(dropout)
-        )
+            nn.Linear(input_dim, input_dim // 4),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(input_dim // 4, self.pred_len)
+        ).to(next(self.parameters()).device)
         
         # Adaptive weighting
         self.weight_net = nn.Sequential(
-            nn.Linear(d_model * (patch_num + 1), 64),
+            nn.Linear(input_dim, 64),
             nn.ReLU(),
             nn.Linear(64, 2),
             nn.Softmax(dim=-1)
-        )
+        ).to(next(self.parameters()).device)
+        
+        self.initialized = True
         
     def forward(self, seasonal_emb, trend_emb):
         # seasonal_emb, trend_emb: [B, N, D, L+1] (including global token)
@@ -205,6 +220,11 @@ class AdaptiveForecastHead(nn.Module):
         # Reshape for processing (use contiguous() to ensure memory layout)
         seasonal_flat = seasonal_emb.contiguous().view(B, N, -1)
         trend_flat = trend_emb.contiguous().view(B, N, -1)
+        
+        # Initialize layers dynamically on first forward pass
+        if not self.initialized:
+            input_dim = seasonal_flat.shape[-1]  # D * L_plus
+            self._initialize_layers(input_dim)
         
         # Predictions
         seasonal_pred = self.seasonal_head(seasonal_flat)  # [B, N, pred_len]
@@ -292,8 +312,7 @@ class Model(nn.Module):
         
         # Adaptive forecasting head
         self.forecast_head = AdaptiveForecastHead(
-            self.n_vars, self.d_model, self.patch_num, 
-            self.pred_len, configs.dropout
+            self.n_vars, self.pred_len, configs.dropout
         )
 
     def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
