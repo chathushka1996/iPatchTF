@@ -93,12 +93,8 @@ do
   --train_epochs $train_epochs \
   --patience $patience \
   --dropout $dropout \
-  --random_seed $random_seed \
-  --use_gpu True \
-  --gpu 0 \
-  --use_multi_gpu False \
   --itr 1 \
-  --checkpoints $checkpoints > $path/logs/$model_name'_'$model_id_name'_'$seq_len'_'$pred_len.log 2>&1
+  #--checkpoints $checkpoints > $path/logs/$model_name'_'$model_id_name'_'$seq_len'_'$pred_len.log 2>&1
   
   echo "Completed training for prediction length: $pred_len"
   echo "Log saved to: $path/logs/$model_name'_'$model_id_name'_'$seq_len'_'$pred_len.log"
