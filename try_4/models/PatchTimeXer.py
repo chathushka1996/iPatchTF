@@ -113,7 +113,7 @@ class InvertedAttentionLayer(nn.Module):
         x_inv = x_inv.view(L, -1, D)  # [L, B*N, D]
         
         # Self-attention across variables
-        attn_out, _ = self.attention(x_inv, x_inv, x_inv)
+        attn_out, _ = self.attention(x_inv, x_inv, x_inv, attn_mask=None)
         x_inv = self.norm1(x_inv + attn_out)
         
         # FFN
@@ -154,7 +154,8 @@ class GlobalContextLayer(nn.Module):
         if ext_emb is not None:
             ext_emb_expanded = ext_emb.repeat(self.n_vars, 1, 1)
             global_context, _ = self.cross_attention(
-                global_tokens, ext_emb_expanded, ext_emb_expanded
+                global_tokens, ext_emb_expanded, ext_emb_expanded,
+                attn_mask=None
             )
             global_tokens = self.norm(global_tokens + self.dropout(global_context))
             patch_with_global = torch.cat([patch_emb, global_tokens], dim=1)
