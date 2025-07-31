@@ -1,2 +1,2 @@
-from .PatchTimeXer import Model as PatchTimeXer
-from .PatchTimeXer_Enhanced import Model as PatchTimeXerEnhanced
+from . import PatchTimeXer
+from . import PatchTimeXerEnhanced
