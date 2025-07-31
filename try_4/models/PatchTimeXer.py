@@ -89,8 +89,9 @@ class InvertedAttentionLayer(nn.Module):
     """
     Inverted attention mechanism inspired by iTransformer
     """
-    def __init__(self, d_model, n_heads, dropout=0.1):
+    def __init__(self, d_model, n_heads, n_vars, dropout=0.1):
         super(InvertedAttentionLayer, self).__init__()
+        self.n_vars = n_vars
         self.attention = AttentionLayer(
             FullAttention(False, attention_dropout=dropout, output_attention=False),
             d_model, n_heads
@@ -107,12 +108,16 @@ class InvertedAttentionLayer(nn.Module):
         
     def forward(self, x):
         # Apply inverted attention (across variables)
-        # x: [B*N, L, D] -> transpose to [B*L, N, D] for variable-wise attention
+        # x: [B*N, L, D] -> reshape to [B*L, N, D] for variable-wise attention
         B_N, L, D = x.shape
-        x_inv = x.view(-1, L, D).transpose(0, 1).contiguous()  # [L, B*N, D]
-        x_inv = x_inv.view(L, -1, D)  # [L, B*N, D]
+        B = B_N // self.n_vars
         
-        # Self-attention across variables
+        # Reshape to separate batch and variables: [B*N, L, D] -> [B, N, L, D]
+        x_reshaped = x.view(B, self.n_vars, L, D)
+        # Reshape for variable-wise attention: [B, N, L, D] -> [B*L, N, D]
+        x_inv = x_reshaped.permute(0, 2, 1, 3).contiguous().view(B * L, self.n_vars, D)
+        
+        # Self-attention across variables (N dimension)
         attn_out, _ = self.attention(x_inv, x_inv, x_inv, attn_mask=None)
         x_inv = self.norm1(x_inv + attn_out)
         
@@ -120,8 +125,8 @@ class InvertedAttentionLayer(nn.Module):
         ffn_out = self.ffn(x_inv)
         x_inv = self.norm2(x_inv + ffn_out)
         
-        # Reshape back
-        x_out = x_inv.view(L, B_N // L, L, D).transpose(0, 1).contiguous()
+        # Reshape back to original format: [B*L, N, D] -> [B, L, N, D] -> [B*N, L, D]
+        x_out = x_inv.view(B, L, self.n_vars, D).permute(0, 2, 1, 3).contiguous()
         x_out = x_out.view(B_N, L, D)
         
         return x_out
@@ -257,7 +262,7 @@ class Model(nn.Module):
         
         # Inverted attention layers
         self.inv_attention_layers = nn.ModuleList([
-            InvertedAttentionLayer(self.d_model, configs.n_heads, configs.dropout)
+            InvertedAttentionLayer(self.d_model, configs.n_heads, self.n_vars, configs.dropout)
             for _ in range(configs.e_layers)
         ])
         

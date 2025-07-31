@@ -138,8 +138,8 @@ def test_component_integration():
         print(f"✓ SeasonTrendDecomposer: {x_test.shape} -> seasonal={seasonal.shape}, trend={trend.shape}")
         
         # Test InvertedAttentionLayer
-        inv_attn = InvertedAttentionLayer(d_model=256, n_heads=8)
-        x_test = torch.randn(20, 12, 256)  # [B*N, L, D]
+        inv_attn = InvertedAttentionLayer(d_model=256, n_heads=8, n_vars=10)
+        x_test = torch.randn(20, 12, 256)  # [B*N, L, D] where B*N=20, so B=2, N=10
         output = inv_attn(x_test)
         print(f"✓ InvertedAttentionLayer: {x_test.shape} -> {output.shape}")
         
