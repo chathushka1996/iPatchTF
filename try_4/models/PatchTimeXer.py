@@ -202,9 +202,9 @@ class AdaptiveForecastHead(nn.Module):
         # seasonal_emb, trend_emb: [B, N, D, L+1] (including global token)
         B, N, D, L_plus = seasonal_emb.shape
         
-        # Reshape for processing
-        seasonal_flat = seasonal_emb.view(B, N, -1)
-        trend_flat = trend_emb.view(B, N, -1)
+        # Reshape for processing (use contiguous() to ensure memory layout)
+        seasonal_flat = seasonal_emb.contiguous().view(B, N, -1)
+        trend_flat = trend_emb.contiguous().view(B, N, -1)
         
         # Predictions
         seasonal_pred = self.seasonal_head(seasonal_flat)  # [B, N, pred_len]
