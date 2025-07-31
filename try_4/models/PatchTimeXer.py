@@ -227,21 +227,19 @@ class Model(nn.Module):
         self.seq_len = configs.seq_len
         self.pred_len = configs.pred_len
         self.n_vars = configs.enc_in
-        self.use_norm = getattr(configs, 'use_norm', True)
+        self.use_norm = getattr(configs, 'use_norm', 1) == 1  # Convert int to bool
         
         # Model hyperparameters
         self.patch_len = getattr(configs, 'patch_len', 16)
-        self.stride = getattr(configs, 'stride', 8)
+        self.stride = getattr(configs, 'stride', self.patch_len // 2)  # Default: half of patch_len
         self.d_model = configs.d_model
         self.scales = getattr(configs, 'scales', [1, 2, 4])
         
         # Calculate patch number
         self.patch_num = (self.seq_len - self.patch_len) // self.stride + 1
         
-        # Core components
-        self.decomposer = SeasonTrendDecomposer(
-            moving_avg=getattr(configs, 'moving_avg', 25)
-        )
+        # Core components - use moving_avg from configs
+        self.decomposer = SeasonTrendDecomposer(moving_avg=configs.moving_avg)
         
         self.patch_embedding = MultiScalePatchEmbedding(
             d_model=self.d_model,

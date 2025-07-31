@@ -1,2 +1,2 @@
 
-from .PatchTimeXer import PatchTimeXer
+from . import PatchTimeXer

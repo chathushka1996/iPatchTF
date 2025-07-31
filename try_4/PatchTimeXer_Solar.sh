@@ -95,7 +95,6 @@ do
         --des 'PatchTimeXer_Solar' \
         --itr $itr \
         --patch_len $patch_len \
-        --stride $stride \
         --moving_avg $moving_avg \
         --use_norm $use_norm \
         # --checkpoints $checkpoints \
@@ -141,11 +140,10 @@ do
         --des 'PatchTimeXer_Solar_Eval' \
         --itr $itr \
         --patch_len $patch_len \
-        --stride $stride \
         --moving_avg $moving_avg \
         --use_norm $use_norm \
         # --checkpoints $checkpoints \
-        > $logs_path/${model_name}_${model_id_name}_${seq_len}_${pred_len}_eval.log 2>&1
+        # > $logs_path/${model_name}_${model_id_name}_${seq_len}_${pred_len}_eval.log 2>&1
         
     echo "Evaluation complete for horizon $pred_len"
 done
