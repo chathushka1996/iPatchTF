@@ -15,9 +15,10 @@ TypePos = namedtuple('TypePos', ['static', 'observed'])
 # 'known' columns needn't be added, because 'known' inputs are automatically judged and provided by the program.
 datatype_dict = {'ETTh1': TypePos([], [x for x in range(7)]),
                  'ETTm1': TypePos([], [x for x in range(7)]),
-                 'custom': TypePos([], [x for x in range(21)]),  # Weather dataset (21 variables)
+                 'custom': TypePos([], [x for x in range(10)]),  # Solar enhanced dataset (10 variables, excluding date)
                  'solar': TypePos([], [x for x in range(8)]),   # Solar basic dataset (8 variables, excluding date)
-                 'solar_enhanced': TypePos([], [x for x in range(10)])  # Solar enhanced (10 variables, excluding date)
+                 'solar_enhanced': TypePos([], [x for x in range(10)]),  # Solar enhanced (10 variables, excluding date)
+                 'weather': TypePos([], [x for x in range(21)])  # Weather dataset (21 variables)
                  }
 
 
