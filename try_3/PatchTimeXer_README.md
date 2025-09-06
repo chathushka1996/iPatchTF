@@ -2,22 +2,22 @@
 
 ## Overview
 
-PatchTimeXer is a novel hybrid deep learning model that combines the best features from **PatchTST** and **TimeXer** to achieve superior performance in long-term time series forecasting. This model leverages the computational efficiency of patch-based processing with advanced attention mechanisms to capture both local patterns and global dependencies in time series data.
+PatchTimeXer is a novel hybrid deep learning model that combines the best features from **PatchTST** and **Temporal Fusion Transformers (TFT)** to achieve superior performance in long-term time series forecasting. This model leverages the computational efficiency of patch-based processing with advanced attention mechanisms to capture both local patterns and global dependencies in time series data.
 
 ## Key Features
 
 ### 🚀 **Best of Both Worlds**
 - **Efficient Patching** from PatchTST for reduced computational complexity
-- **Global Token Mechanism** from TimeXer for capturing global patterns
-- **Dual Embedding System** for both endogenous and exogenous features
-- **Cross-Attention** between patches and global context
+- **Global Token Mechanism** inspired by BERT's [CLS] token for capturing global patterns
+- **Dual Embedding System** from TFT for both endogenous and exogenous features
+- **Cross-Attention** based on Transformer architecture between patches and global context
 
 ### 🎯 **Core Innovations**
 
 1. **HybridPatchEmbedding**: Enhanced patch embedding that combines:
    - PatchTST's efficient stride-based patching
-   - TimeXer's global token for global pattern capture
-   - Advanced positional encoding
+   - BERT-inspired global token for global pattern capture
+   - Transformer-style positional encoding
    - Layer normalization for training stability
 
 2. **HybridEncoderLayer**: Sophisticated encoder with:
@@ -263,7 +263,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 - **PatchTST**: For the efficient patch-based processing approach
-- **TimeXer**: For the global token mechanism and dual embedding strategy
+- **Temporal Fusion Transformers (TFT)**: For the dual embedding strategy and exogenous feature integration
+- **BERT**: For the global token mechanism inspiration
+- **Transformer Architecture**: For the foundational attention mechanisms
 - **TimesNet Framework**: For providing the experimental infrastructure
 
 ## Contact
