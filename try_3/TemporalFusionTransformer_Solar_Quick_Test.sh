@@ -23,9 +23,9 @@ python -u run.py \
   --e_layers 2 \
   --d_layers 1 \
   --factor 3 \
-  --enc_in 9 \
-  --dec_in 9 \
-  --c_out 9 \
+  --enc_in 8 \
+  --dec_in 8 \
+  --c_out 8 \
   --d_model 128 \
   --d_ff 256 \
   --n_heads 4 \

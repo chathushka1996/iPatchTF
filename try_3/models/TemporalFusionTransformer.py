@@ -16,8 +16,8 @@ TypePos = namedtuple('TypePos', ['static', 'observed'])
 datatype_dict = {'ETTh1': TypePos([], [x for x in range(7)]),
                  'ETTm1': TypePos([], [x for x in range(7)]),
                  'custom': TypePos([], [x for x in range(21)]),  # Weather dataset (21 variables)
-                 'solar': TypePos([], [x for x in range(9)]),   # Solar dataset (9 variables)
-                 'solar_enhanced': TypePos([], [x for x in range(11)])  # Solar enhanced (11 variables)
+                 'solar': TypePos([], [x for x in range(8)]),   # Solar basic dataset (8 variables, excluding date)
+                 'solar_enhanced': TypePos([], [x for x in range(10)])  # Solar enhanced (10 variables, excluding date)
                  }
 
 

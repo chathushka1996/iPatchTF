@@ -7,15 +7,16 @@ model_name=TemporalFusionTransformer
 seq_len=96
 dataset=sl_t
 root_path_name=./dataset/$dataset
-data_path_name=solar.csv
+data_path_name=train.csv
 model_id_name=solar_$dataset
-data_name=custom
+data_name=solar_enhanced
 random_seed=2021
 checkpoints=$path/model_log
 
-echo "Starting TemporalFusionTransformer evaluation on solar dataset..."
+echo "🌞 Starting TemporalFusionTransformer evaluation on Enhanced Solar dataset..."
 echo "Model: $model_name"
-echo "Dataset: $dataset"
+echo "Dataset: $dataset (Solar Power with Temporal Features)"
+echo "Variables: 10 (dayofyear, timeofday, temp, dew, humidity, winddir, windspeed, pressure, cloudcover, Solar Power Output)"
 echo "Sequence Length: $seq_len"
 
 for pred_len in 96 192 336 720
@@ -74,7 +75,7 @@ do
   --data_path $data_path_name \
   --model_id $model_id_name$seq_len'_'$pred_len \
   --model $model_name \
-  --data custom \
+  --data $data_name \
   --features M \
   --seq_len $seq_len \
   --label_len 48 \
