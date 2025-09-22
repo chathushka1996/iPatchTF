@@ -21,17 +21,10 @@ learning_rate=0.0001
 train_epochs=10
 
 # Prediction horizons to test
-pred_lens=(96 192 336 720)
+pred_lens="96 192 336 720"
 
 # Model variants for ablation study
-models=(
-    "PatchXFormer"
-    "PatchXFormer_NoFreqAttention" 
-    "PatchXFormer_NoAdaptiveNorm"
-    "PatchXFormer_NoEnhancedEmbedding"
-    "PatchXFormer_NoHybridEncoder"
-    "PatchXFormer_BasicPatchModel"
-)
+models="PatchXFormer PatchXFormer_NoFreqAttention PatchXFormer_NoAdaptiveNorm PatchXFormer_NoEnhancedEmbedding PatchXFormer_NoHybridEncoder PatchXFormer_BasicPatchModel"
 
 # Model descriptions
 declare -A descriptions
@@ -46,14 +39,14 @@ descriptions["PatchXFormer_BasicPatchModel"]="Basic Patch Model (No Enhancements
 mkdir -p ablation_results
 
 # Run ablation study
-for model in "${models[@]}"; do
+for model in $models; do
     echo ""
     echo "=============================================="
     echo "Testing: ${descriptions[$model]}"
     echo "Model: $model"
     echo "=============================================="
     
-    for pred_len in "${pred_lens[@]}"; do
+    for pred_len in $pred_lens; do
         echo ""
         echo "Forecast Horizon: $pred_len time steps"
         echo "----------------------------------------------"

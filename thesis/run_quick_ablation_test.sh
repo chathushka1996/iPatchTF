@@ -21,12 +21,7 @@ train_epochs=3  # Reduced for quick testing
 pred_len=96     # Single horizon for quick test
 
 # Model variants for quick test
-declare -a models=(
-    "PatchXFormer"
-    "PatchXFormer_NoFreqAttention" 
-    "PatchXFormer_NoEnhancedEmbedding"
-    "PatchXFormer_BasicPatchModel"
-)
+models="PatchXFormer PatchXFormer_NoFreqAttention PatchXFormer_NoEnhancedEmbedding PatchXFormer_BasicPatchModel"
 
 # Model descriptions
 declare -A descriptions
@@ -38,7 +33,7 @@ descriptions["PatchXFormer_BasicPatchModel"]="Basic Patch Model"
 echo "Testing $pred_len time step forecast with $train_epochs epochs"
 echo ""
 
-for model in "${models[@]}"; do
+for model in $models; do
     echo "=============================================="
     echo "Testing: ${descriptions[$model]}"
     echo "=============================================="

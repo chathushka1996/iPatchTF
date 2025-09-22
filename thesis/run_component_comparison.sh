@@ -41,27 +41,27 @@ case $comparison_type in
     "attention")
         echo "COMPARING: Frequency-Enhanced Attention Impact"
         echo "Models: PatchXFormer vs PatchXFormer_NoFreqAttention"
-        models=("PatchXFormer" "PatchXFormer_NoFreqAttention")
+        models="PatchXFormer PatchXFormer_NoFreqAttention"
         ;;
     "embedding")
         echo "COMPARING: Enhanced Patch Embedding Impact"
         echo "Models: PatchXFormer vs PatchXFormer_NoEnhancedEmbedding"
-        models=("PatchXFormer" "PatchXFormer_NoEnhancedEmbedding")
+        models="PatchXFormer PatchXFormer_NoEnhancedEmbedding"
         ;;
     "normalization")
         echo "COMPARING: Adaptive Normalization Impact"
         echo "Models: PatchXFormer vs PatchXFormer_NoAdaptiveNorm"
-        models=("PatchXFormer" "PatchXFormer_NoAdaptiveNorm")
+        models="PatchXFormer PatchXFormer_NoAdaptiveNorm"
         ;;
     "encoder")
         echo "COMPARING: Hybrid Encoder Impact"
         echo "Models: PatchXFormer vs PatchXFormer_NoHybridEncoder"
-        models=("PatchXFormer" "PatchXFormer_NoHybridEncoder")
+        models="PatchXFormer PatchXFormer_NoHybridEncoder"
         ;;
     "all_vs_basic")
         echo "COMPARING: All Enhancements vs Basic Model"
         echo "Models: PatchXFormer vs PatchXFormer_BasicPatchModel"
-        models=("PatchXFormer" "PatchXFormer_BasicPatchModel")
+        models="PatchXFormer PatchXFormer_BasicPatchModel"
         ;;
     *)
         echo "Invalid comparison type: $comparison_type"
@@ -75,7 +75,7 @@ echo "Training Epochs: $train_epochs"
 echo "==============================================="
 
 # Run comparison
-for model in "${models[@]}"; do
+for model in $models; do
     echo ""
     echo "----------------------------------------------"
     echo "Running: $model"

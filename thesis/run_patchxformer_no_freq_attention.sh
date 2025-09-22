@@ -23,9 +23,9 @@ learning_rate=0.0001
 train_epochs=10
 
 # Prediction horizons to test
-pred_lens=(96 192 336 720)
+pred_lens="96 192 336 720"
 
-for pred_len in "${pred_lens[@]}"; do
+for pred_len in $pred_lens; do
     echo ""
     echo "----------------------------------------------"
     echo "Forecast Horizon: $pred_len time steps"
