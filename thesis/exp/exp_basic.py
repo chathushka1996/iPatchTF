@@ -1,14 +1,53 @@
 import os
 import torch
-from models import PatchXFormer
+from models import Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer, \
+    Informer, LightTS, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, FiLM, iTransformer, \
+    Koopa, TiDE, FreTS, TimeMixer, TSMixer, SegRNN, MambaSimple, TemporalFusionTransformer, SCINet, PAttn, TimeXer, \
+    WPMixer, MultiPatchFormer, PatchTimeXer, PatchTimeXerEnhanced, PatchXFormer
+from models import PatchXFormer_NoFreqAttention, PatchXFormer_NoAdaptiveNorm, PatchXFormer_NoEnhancedEmbedding, \
+    PatchXFormer_NoHybridEncoder, PatchXFormer_BasicPatchModel
 
 
 class Exp_Basic(object):
     def __init__(self, args):
         self.args = args
         self.model_dict = {
-
-            'PatchXFormer': PatchXFormer
+            'TimesNet': TimesNet,
+            'Autoformer': Autoformer,
+            'Transformer': Transformer,
+            'Nonstationary_Transformer': Nonstationary_Transformer,
+            'DLinear': DLinear,
+            'FEDformer': FEDformer,
+            'Informer': Informer,
+            'LightTS': LightTS,
+            'ETSformer': ETSformer,
+            'PatchTST': PatchTST,
+            'Pyraformer': Pyraformer,
+            'MICN': MICN,
+            'Crossformer': Crossformer,
+            'FiLM': FiLM,
+            'iTransformer': iTransformer,
+            'Koopa': Koopa,
+            'TiDE': TiDE,
+            'FreTS': FreTS,
+            'MambaSimple': MambaSimple,
+            'TimeMixer': TimeMixer,
+            'TSMixer': TSMixer,
+            'SegRNN': SegRNN,
+            'TemporalFusionTransformer': TemporalFusionTransformer,
+            "SCINet": SCINet,
+            'PAttn': PAttn,
+            'TimeXer': TimeXer,
+            'WPMixer': WPMixer,
+            'MultiPatchFormer': MultiPatchFormer,
+            'PatchTimeXer': PatchTimeXer,
+            'PatchTimeXerEnhanced': PatchTimeXerEnhanced,
+            'PatchXFormer': PatchXFormer,
+            'PatchXFormer_NoFreqAttention': PatchXFormer_NoFreqAttention,
+            'PatchXFormer_NoAdaptiveNorm': PatchXFormer_NoAdaptiveNorm,
+            'PatchXFormer_NoEnhancedEmbedding': PatchXFormer_NoEnhancedEmbedding,
+            'PatchXFormer_NoHybridEncoder': PatchXFormer_NoHybridEncoder,
+            'PatchXFormer_BasicPatchModel': PatchXFormer_BasicPatchModel
         }
         if args.model == 'Mamba':
             print('Please make sure you have successfully installed mamba_ssm')
