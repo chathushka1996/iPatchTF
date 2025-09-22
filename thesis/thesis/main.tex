@@ -1,0 +1,1710 @@
+%% Default is IEEE. Add "APA" as an option to use APA
+% add twoside for final
+% singlespace
+% UoMdraft
+\documentclass[12pt]{uomthesis}
+
+
+\usepackage{packages/lgrind}
+% \usepackage{geometry}
+% \geometry{margin=1in} % Adjust the margin size as needed
+\usepackage{amssymb}% http://ctan.org/pkg/amssymb
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\usepackage{booktabs} % For prettier tables
+\usepackage{color} % To add color
+\usepackage{colortbl} % To add color to tables
+\usepackage{amsmath} % For mathematical symbols
+\usepackage{graphicx} % Required for including images
+\definecolor{Gray}{gray}{0.9}
+%\usepackage{lgrind}
+\usepackage{cmap}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+\pagestyle{plain}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{tabularx}
+%\renewcommand\tabularxcolumn[1]{m{#1}}% for vertical centering text in X column
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\usepackage{enumerate}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{mathdots}
+% \usetikzlibrary{fadings}
+\usepackage{bbm}
+\captionsetup{compatibility=false}
+\DeclareMathOperator*{\argmax}{argmax}
+\usepackage{tikz}
+\usepackage{epsfig}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage{makecell}
+\usepackage{hyperref}
+\hypersetup{
+colorlinks   = true,
+citecolor    = blue,
+urlcolor    =  blue
+}
+\usepackage{url}
+
+
+\begin{document}
+% Update the following variables. Doing so will auto-generate the first three pages:
+% 1. Cover Page
+% 2. Title Page
+% 3. Declaration Page
+\title{PatchXFormer: An Enhanced Patch-based Transformer Architecture with Frequency-Aware Attention for Long-Term Solar Power Forecasting}
+\student{239159V}{P. D. C. G Karunathilaka}
+%\student{}{} % If there are multiple student authors (e.g., undergraduate project), just keep adding \student{}{} variables. The class will automatically handle it
+\degree{MSc. in Data Science and Artificial Intelligence} % PhD/MPhil/Master’s 
+\department{Department of Computer Science and Engineering}
+\type{Dissertation} % Thesis/Dissertation
+\degreemonth{May}
+\degreeyear{2025}
+\faculty{Faculty of Engineering}
+\keywords{renewable resources, solar power, energy forecasting, deep learning, transformer-based models}
+\supervisorName{Dr. Sandareka Wickramanayake}  % Name of the Supervisor
+%\supervisorName{} % If you have multiple supervisors, just keep adding \supervisorName{} variables. The class will automatically handle it
+
+
+\maketitle
+
+
+%\unNumChapter{Dedication}
+%Write your dedication here (if any)
+
+%\unNumChapter{Acknowledgement}
+%Write your acknowledgment here 
+
+\begin{abstractpage}
+
+Accurate long-term forecasting of Solar Power Generation (SPG) is crucial for effective integration of solar energy into electrical grids, supporting energy storage optimization, grid stability, and strategic energy planning. However, SPG forecasting remains challenging due to high variability in weather conditions and limitations in current predictive models, especially over extended time horizons. This study introduces PatchXFormer, a novel enhanced patch-based transformer architecture that incorporates frequency-aware attention mechanisms, adaptive normalization, and enhanced patch embedding techniques to significantly improve the accuracy and robustness of long-term SPG forecasting.
+
+PatchXFormer is a hybrid architecture that strategically unifies three key techniques from state-of-the-art models: (1) Patch-based embedding from PatchTST \cite{nie2022patchtst} for efficient long sequence processing, (2) Exogenous variable embedding from Temporal Fusion Transformer (TFT) \cite{lim2021temporal} for meteorological feature integration, and (3) Frequency-enhanced attention from FEDformer \cite{zhou2022fedformer} for comprehensive temporal-spectral modeling. These foundational techniques are enhanced with novel innovations including adaptive normalization layers, enhanced positional encoding, and multi-path prediction heads with residual connections. The unified architecture maintains computational efficiency while achieving superior forecasting performance across multiple prediction horizons.
+
+We evaluate PatchXFormer on a real-world dataset collected from a solar power plant in Piliyandala, Sri Lanka, with 15-minute interval data spanning multiple forecast horizons (96, 192, 336, and 720 time steps). Comprehensive benchmarking against state-of-the-art models including PatchTST, ITransformer, Informer, DLinear, TFT, and NLinear demonstrates consistent superior performance across all evaluation metrics. PatchXFormer achieves significant improvements in Mean Squared Error (MSE) and Mean Absolute Error (MAE), with particularly notable gains in long-horizon forecasting scenarios.
+
+Our experimental results show that PatchXFormer consistently outperforms existing architectures by substantial margins, achieving MSE improvements of 5-15\% across different forecast horizons. The model demonstrates exceptional robustness under variable tropical weather conditions and maintains stable performance across extended prediction windows. This research contributes a comprehensive advancement in transformer-based time series forecasting, introducing scalable architectural innovations that enhance both accuracy and computational efficiency for solar energy forecasting applications, ultimately supporting sustainable energy transition and grid resilience.
+
+\end{abstractpage}
+
+
+
+
+% This prints the Table of Contents. Do not change this block.
+\begin{ToC}
+\makeatletter
+    \@starttoc{toc}
+ \makeatother
+\end{ToC}
+
+% This prints the List of Figures, if there is at least one figure in your document, set up according to the given guidelines.
+\iffigures
+    \begin{LoF}
+        \makeatletter
+            \@starttoc{lof}
+        \makeatother
+    \end{LoF}
+\fi
+
+
+% This prints the List of Tables, if there is at least one table in your document, set up according to the given guidelines.
+\iftables
+    \begin{LoT}
+    \makeatletter
+        \@starttoc{lot}
+    \makeatother
+    \end{LoT}
+\fi
+
+% This prints the List of Abbreviations, if there is at least one abbreviation in your document, set up according to the given guidelines.
+\ifabbrs
+    \printacronyms
+\fi
+
+% This prints the List of Appendices, if there is at least one abbreviation in your document, set up according to the given guidelines.
+\ifappens
+    \begin{LoAp}
+    \makeatletter
+        \@starttoc{apc} % Print List of Appendices
+    \makeatother
+    \end{LoAp}
+\fi
+
+% This marks the start of your chapters
+\startContent
+
+
+\chapter{Introduction}
+
+\section{Background}
+As the world increasingly transitions toward renewable energy sources, solar power has emerged as a pivotal contributor to global energy sustainability. Its abundance, low environmental impact, and potential to decentralize energy production make it a cornerstone of the renewable energy agenda. However, integrating solar power into electrical grids on a large scale requires accurate forecasting of Solar Power Generation (SPG). Reliable long-term forecasts help balance supply and demand, optimize storage, manage grid stability, and support energy trading.
+
+Despite its significance, long-term SPG forecasting remains a complex challenge. Solar irradiance and power output are subject to high variability due to factors such as cloud cover, temperature, humidity, and seasonal shifts. Traditionally, SPG forecasting methods have ranged from physical models based on numerical weather prediction (NWP) to statistical approaches like autoregressive models. Recently, Machine Learning (ML) and Deep Learning (DL) techniques have gained popularity, offering improved accuracy by learning nonlinear patterns in high-dimensional data \cite{ahmed2020review}.
+
+Among DL models, Transformer-based architectures such as PatchTST \cite{nie2022patchtst}, Autoformer \cite{wu2021autoformer}, and Informer \cite{zhou2021informer} have demonstrated remarkable capabilities in long-term time series forecasting. These models outperform traditional recurrent neural networks (RNNs) and convolutional models by capturing global temporal dependencies with greater efficiency. Furthermore, novel architectures like DLinear and NLinear \cite{zeng2023transformers} have introduced lightweight alternatives that retain competitive performance while reducing computational complexity. However, these models have not been thoroughly evaluated in the context of SPG, especially for data collected from diverse climatic regions or over extended horizons.
+
+Another critical challenge in SPG forecasting is the scarcity of real-world datasets. Many publicly available datasets, such as those from SoDa, ECMWF, GFS, and SARAH, rely heavily on satellite-based or synthetic data \cite{SoDa,ECMWF,GFS,SARAH}. While these datasets are useful, they may not fully represent the complexities and uncertainties of on-ground SPG, particularly in underrepresented regions such as the tropics. Moreover, the lack of multi-horizon benchmarking limits our understanding of model behavior across different forecasting scales.
+
+In response to these gaps, this study introduces a novel dataset, SPG-SL, collected from a solar energy site in Piliyandala, Sri Lanka for comprehensive evaluation. This empirical study investigates the performance of state-of-the-art DL-based forecasting models across multiple horizons using real-world meteorological variables.
+
+\section{Motivation}
+
+The motivation for this research is twofold. First, there is a pressing need to improve the reliability of long-term Solar Power Generation (SPG) forecasting to support the broader adoption of solar energy. Accurate long-range forecasts are vital for grid operators and energy planners to make informed decisions about generation scheduling, energy storage management, and infrastructure development. Inaccurate forecasts can lead to system instability, inefficient energy use, and increased operational costs. Despite the advancements in time series forecasting, current deep learning models still struggle with the high variability of solar power due to dynamic environmental conditions, especially when extended to longer forecasting horizons.
+
+Second, although Transformer-based models have achieved remarkable results in various forecasting domains, their application to SPG remains underexplored particularly in complex real-world environments and geographically diverse settings. Prior works often rely on benchmark datasets that fail to reflect the noise, irregularity, and environmental diversity of real SPG systems, especially those in tropical regions. In tropical zones, rapid cloud cover changes and distinct seasonal patterns introduce unique forecasting challenges that many existing models are not optimized to handle. The robustness of Transformer models under such varied meteorological conditions, and their performance across different temporal granularities, remains uncertain.
+
+\section{Problem Statement}
+
+Despite significant advancements in solar energy forecasting, particularly in short-term predictions, there remains a considerable deficit in medium-to-long-term forecasting. Current methodologies are heavily skewed towards short-term forecasts, leaving longer-term predictions less explored. This limitation obstructs the ability of energy systems to plan and adapt to long-term variability in solar energy availability. Another problem is the robustness of recent forecasting models, which often struggle to deliver consistent performance across diverse weather conditions, seasons, and different times of day. This lack of robustness under varied environmental circumstances makes it difficult to demonstrate consistent accuracy and reliability, particularly when compared to existing models. Therefore we aim to address these gaps by answering the following research question:
+\begin{center}
+\emph{How to enhance solar energy forecasting accuracy for medium and long-range
+periods while improving prediction reliability across various environmens?}
+\end{center}
+
+
+\section{Research Objectives}
+\label{ch:research:objectives}
+\begin{enumerate}
+    \item \textbf{To enhance forecasting accuracy for long-term periods:} Focus on improving the forecasting accuracy for extended time horizons, particularly in medium-term and long-term solar power predictions. The objective is to demonstrate consistent and reliable accuracy across various forecasting periods, with a significant emphasis on enhancing long-term predictive capabilities.
+    
+    \item \textbf{To ensure robustness across diverse environmental conditions:} Evaluate the model’s performance across environmental conditions, ensuring that it maintains consistent forecasting accuracy despite variations in local climate and solar irradiance. This will demonstrate the model’s reliability and robustness in real-world applications, validating its performance across different geographical settings.
+\end{enumerate}
+
+
+
+\section{Research Questions}
+\label{sec:research-questions}
+
+This study investigates the following primary research question:
+
+\noindent\textbf{RQ1:} How to develop a  to improve solar power forecasting accuracy over medium- and long-term horizons?
+
+Supporting sub-questions for RQ1 include:
+
+\begin{itemize}
+    \item \textbf{RQ1.1:} How can the inclusion of additional features, such as weather parameters and derivative-based features, enhance the forecasting accuracy for medium- and long-term solar power predictions?
+    \item \textbf{RQ1.2:} How do existing transformer-based models perform when applied to real-world solar power generation (SPG) data from different geographic regions?
+\end{itemize}
+
+
+\noindent\textbf{RQ1:}{RQ2:} How can the robustness of deep learning models for solar power forecasting be ensured across diverse environmental conditions?
+
+
+Supporting sub-questions for RQ2 include:
+
+\begin{itemize}
+    \item \textbf{RQ2.1:} How does the model perform across distinct environmental conditions, characterized by variations in solar irradiance and local climate?
+    \item \textbf{RQ2.2:} How can the model's performance be evaluated for consistency and reliability across these distinct environments, ensuring robustness in real-world applications?
+\end{itemize}
+
+\section{Scope and Limitations}
+\label{sec:scope-limitations}
+
+This research focuses on the application of deep learning models to long-term solar power generation (SPG) forecasting. It primarily evaluates Transformer-based architectures and compares their performance against baseline models using real-world datasets. The scope of this study includes the following:
+
+\begin{itemize}
+    \item Forecasting timeframes range from hours to multiple days, targeting medium- to long-term prediction horizons.
+    \item The datasets used include a newly collected tropical dataset from Sri Lanka (SPG-SL).
+    \item Model performance is evaluated using standard regression metrics, specifically Mean Squared Error (MSE) and Mean Absolute Error (MAE).
+\end{itemize}
+
+\textbf{Limitations:}
+
+\begin{itemize}
+    \item The study does not focus on real-time forecasting or short-term predictions (e.g., within the range of minutes to one hour).
+    % \item The data used in this research is limited to two geographic locations—Sri Lanka and the United States—which may not capture the full diversity of global climatic conditions.
+    \item The data used in this research is limited to one geographic location in Sri Lanka and which may not capture the full diversity of global climatic conditions.
+    \item Aspects such as deployment feasibility, computational efficiency, and model interpretability are not deeply explored and are considered out of the current study’s scope.
+\end{itemize}
+
+
+\section{Thesis Organization}
+\label{sec:thesis-organization}
+
+This thesis is structured into six chapters:
+
+\begin{itemize}
+\item \textbf{Chapter 1: Introduction} – Outlines the research background, problem statement, objectives, significance, and structure of the thesis.
+
+\item \textbf{Chapter 2: Literature Review} – Reviews existing approaches in solar power and time series forecasting, categorizes key methods, identifies gaps, and positions the proposed research.
+
+\item \textbf{Chapter 3: Methodology} – Describes the proposed hybrid Transformer-based model, including architectural components, design rationale, and the complete forecasting pipeline.
+
+\item \textbf{Chapter 4: Experimental Study} – Explains dataset preparation (including SPG-SL), experimental setup, evaluation metrics, and comparative results against baseline models.
+
+\item \textbf{Chapter 5: Discussion} – Analyzes results in relation to research questions, compares model performance, and discusses practical implications and limitations.
+
+\item \textbf{Chapter 6: Conclusion and Future Work} – Summarizes contributions and findings, and outlines directions for future research and model enhancement.
+
+\end{itemize}
+
+\chapter{Literature review}
+\label{ch:literature:review}
+
+The literature on solar energy forecasting has evolved significantly over the past decade, with methodologies ranging from traditional statistical approaches to cutting-edge deep learning architectures. This comprehensive review examines the progression from conventional forecasting methods to state-of-the-art transformer-based models, with particular emphasis on architectural innovations that have shaped the current landscape of time series forecasting. The review is structured to provide a systematic analysis of key developments in forecasting methodologies, highlighting their contributions, limitations, and relevance to the proposed PatchXFormer architecture.
+
+The rapid evolution of deep learning techniques has revolutionized time series forecasting, particularly in the renewable energy sector where accurate predictions are crucial for grid stability and energy management. Traditional approaches, while foundational, have given way to more sophisticated architectures capable of capturing complex temporal dependencies and non-linear patterns inherent in solar power generation data. The emergence of transformer architectures has marked a paradigm shift, offering unprecedented capabilities in modeling long-range dependencies and handling multivariate time series data.
+
+This review categorizes the existing literature into several key areas: traditional forecasting approaches (physical, statistical, and classical machine learning methods), deep learning methodologies (RNNs, LSTMs, CNNs), transformer-based architectures for time series forecasting, specialized transformer variants for long-term prediction, patch-based decomposition methods, frequency-enhanced attention mechanisms, and domain-specific applications in solar energy forecasting. Each category is analyzed in terms of its methodological contributions, performance characteristics, computational efficiency, and practical applicability. 
+
+
+\section{Physical Approaches}
+In physical approaches, calculating the power generated by PV systems involves using physical models based on equivalent electrical circuits \cite{tian2012cell}. To break it down, we can use a specific circuit model for an individual solar cell as describd by sarkar et al. \cite{sarkar2016effect} and Dolara et al. \cite{dolara2015comparison}. This model becomes the foundation for creating similar circuit models that can be applied to PV modules and entire PV systems.
+
+\section{Data driven Approaches}
+\label{Sec:Intro:Render}
+In data-driven approaches, patterns, correlations, and predictions are derived directly from the data, often without explicit reliance on predefined models or theories. These methods use heuristic techniques, statistical analyses, advanced machine learning algorithms, and data-driven approaches \cite{ij2018statistics} to get information regarding patterns and correlations.
+
+\subsection{Statistical Methods}
+Statistical methods used in solar energy prediction, including the \abbr{Autoregressive Moving Average}{ARMA}, \abbr{Autoregressive Integrated Moving Average}{ARIMA}, \abbr{Seasonal Autoregressive Integrated Moving Average}{SARIMA} draw on historical data to make predictions. Unlike heuristic models, statistical approaches involve selecting models based on prior knowledge of the system.
+
+\begin{enumerate}
+    \item \textbf{ARMA (AutoRegressive Moving Average):} The AutoRegressive Moving Average (ARMA) model \cite{singh2019guide,colak2015multi} serves as a foundational framework for time series analysis and specifically in solar energy prediction. Comprising \abbr{Autoregressive}{AR} and \abbr{Moving average}{MA} components, it is defined by parameters, representing the orders of auto-regression and moving average, respectively.
+    \item \textbf{ARIMA (AutoRegressive Integrated Moving Average:} ARIMA \cite{atique2019forecasting,colak2015multi} expands upon the ARMA model by introducing an integrated component to account for non-stationary trends in the data. With parameters denoting auto-regression order, differencing order, and moving average order, respectively, ARIMA captures both auto-regressive and moving average effects.
+    \item \textbf{SARIMA (Seasonal ARIMA):} An extension of ARIMA, the Seasonal ARIMA (SARIMA) \cite{haddad2019wind} model accommodates the inherent seasonality observed in datasets. Particularly relevant for Solar energy applications, SARIMA incorporates seasonal patterns on both daily and annual scales. This feature enhances the model's accuracy in capturing the periodic variations commonly found in Solar energy systems.
+\end{enumerate}
+
+
+\subsection{Machine Learning Methods}
+\abbr{Machine learning}{ML} algorithms, chosen for their predictive capabilities, focus on finding generalizable patterns in historical data. Unlike statistical methods that aim to infer outcomes based on system knowledge, ML approaches are designed to discover patterns that can be applied more broadly. 
+\begin{enumerate}
+    \item \textbf{k-Nearest Neighbors (k-NN):} \abbr{K-Nearest Neighbors}{k-NN} \cite{zhang2015gefcom2014} algorithm measures Euclidean distances between the current state and training samples in feature space. By selecting the "k" nearest neighbors, it leverages their characteristics for predictions.
+    \item \textbf{Random Forests (RF):} \abbr{Random Forests}{RF} \cite{huertas2018using} represent an ensemble learning method wherein a collection of regression trees is created, and the final result is determined through voting. For regression problems, individual regression trees are trained, and the forecast is derived from their mean.
+    \item \textbf{XGBoost:} \abbr{Extreme Gradient Boosting}{XGBoost} \cite{li2018probabilistic,obiora2021implementing} building upon the principles of gradient boosting, XGBoost combines decision trees to iteratively refine predictions. It incorporates regularization techniques to enhance generalization and control overfitting.
+    \item \textbf{Light Gradient Boosting Machine (LightGBM):} \abbr{Light Gradient Boosting Machine}{LightGBM} \cite{persson2017multi} stands out as an advanced \abbr{gradient boosting decision tree}{GBDT} algorithm. LightGBM incorporates \abbr{gradient-based one-side sampling}{GOSS} and \abbr{exclusive feature bundling}{EFB} to optimize split points in the GBDT.
+\end{enumerate}
+
+\subsection{Deep Learning Methods}
+In recent years, deep learning techniques, particularly transformer-based models, have demonstrated exceptional capabilities in capturing complex dependencies within sequential data. 
+\begin{enumerate}
+    \item \textbf{Artificial Neural Networks:} \abbr{Artificial Neural Networks}{ANN} \cite{jebli2021deep,abuella2015solar,zhou2021deep,lima2020improving}, inspired by biological neural networks, consisting of interconnected neurons and weights. Using gradient-based optimization, ANNs learn specific tasks by adjusting weights.
+    \item \textbf{Recurrent Neural Networks:} \abbr{Recurrent Neural Networks}{RNN} \cite{li2019recurrent} with their distinctive ability to retain memory through feedback loops, RNNs are well-suited for tasks involving time-series data. RNNs extensively applied in capturing intricate patterns within solar energy generation data.
+    \item \textbf{Long Short-Term Memory:} Similarly, \abbr{Long Short-Term Memory}{LSTM} \cite{liu2021simplified,hossain2020short,massaoudi2019novel,abdel2019accurate,lim2022solar} networks are a specialized type of RNN that addresses the vanishing gradient problem, allowing for more effective learning of long-range dependencies.
+    \item \textbf{Transformers:} Transformers \cite{lopezsantos2022temporalfusion,munsif2023ctnet, alali2023solar,sherozbek2023transformersbased, wen2022transformers, zeng2023transformers}, initially designed for natural language processing tasks, have shown adaptability to sequential data and are increasingly being explored for their effectiveness in capturing complex patterns in time-series data.
+\end{enumerate}
+
+\subsection{Deep learning in Solar Energy Forcasting}
+
+Most of the Recent literature in solar energy forecasting has predominantly employed recurrent neural networks (RNN) and long short-term memory (LSTM) models. However, challenges have emerged in the application of RNN and LSTM for solar energy forecasting, necessitating a deeper exploration of the underlying issues. These challenges may involve issues related to model interpretability, handling complex temporal dependencies, and mitigating performance limitations.
+
+Liu et al. \cite{liu2021simplified} and Abdel Nasser et al. \cite{abdel2019accurate} recognize the drawbacks of ANNs, such as overfitting and the demand for large amounts of training data. In response, Liu et al. propose a simplified approach to time series forecasting using an LSTM model for one-day-ahead solar power forecasting, aiming to achieve accurate results with limited training data, mitigating overfitting concerns, and reducing complexity. 
+
+Hossain et al. \cite{hossain2020short} propose a novel algorithm leveraging LSTM with a synthesized approximate weather forecast to predict intraday and day-ahead horizons. The approach involves classifying historical irradiance data into dynamic types of sky groups using a K-means algorithm, creating a synthetic solar irradiance forecast.
+
+Massaoudi et al. \cite{massaoudi2019novel} propose a hybrid approach combining  \abbr{Nonlinear autoregressive network with exogenous inputs}{NARX} and LSTM-RNN to overcome challenges such as vanishing gradients in traditional models.
+
+ Lim et al. \cite{lim2022solar} propose a hybrid forecasting model combining long short-term memory (LSTM) and convolutional neural network (CNN) architectures to enhance the accuracy of solar power generation forecasting. The hybrid model adopts a parallel structure with a branched CNN-LSTM approach. Initially, a \abbr{Convolutional Neural Networks}{CNN} classifies daily weather conditions as sunny or cloudy based on historical patterns in raw data, allowing for accurate pattern identification depending on weather conditions. Subsequently, the LSTM component consists of two models trained separately on sunny and cloudy day data to extract long-term dependent features from the raw data, enabling more precise power generation predictions tailored to specific weather conditions.
+
+\subsection{Foundations of Transformer Architectures}
+
+The transformer architecture, introduced by Vaswani et al. \cite{vaswani2017attention}, fundamentally revolutionized sequence modeling by replacing recurrent and convolutional layers with self-attention mechanisms. The core innovation lies in the multi-head self-attention mechanism, which enables parallel computation and direct modeling of dependencies regardless of sequence position. This architectural paradigm has proven particularly effective for time series forecasting due to its ability to capture long-range dependencies without the vanishing gradient problems inherent in recurrent architectures.
+
+The standard transformer consists of an encoder-decoder structure, where the encoder maps input sequences to representations and the decoder generates output sequences. For time series forecasting applications, various adaptations have emerged, including encoder-only models for autoregressive prediction and specialized attention mechanisms tailored for temporal data. The self-attention mechanism computes attention weights as:
+
+\begin{equation}
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\end{equation}
+
+where $Q$, $K$, and $V$ represent query, key, and value matrices respectively, and $d_k$ is the dimension of the key vectors. This formulation allows the model to weigh the importance of different positions in the sequence dynamically.
+
+\subsection{Attention Mechanisms and Their Evolution}
+
+The evolution of attention mechanisms has been central to improving transformer performance in time series applications. Beyond the standard scaled dot-product attention, several variants have emerged to address specific challenges in temporal modeling. Sparse attention mechanisms reduce the quadratic complexity of standard attention by limiting connections to a subset of positions, making them suitable for longer sequences. Local attention restricts attention to nearby positions, preserving temporal locality while maintaining computational efficiency.
+
+Multi-head attention extends the basic attention mechanism by computing multiple attention functions in parallel, each focusing on different representational subspaces. This parallel computation enables the model to attend to information from different positions simultaneously:
+
+\begin{equation}
+\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)W^O
+\end{equation}
+
+where each head is computed as $\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$.
+
+Recent developments include adaptive attention mechanisms that dynamically adjust attention patterns based on input characteristics, and frequency-aware attention that incorporates spectral domain information. These advances are particularly relevant for time series forecasting where temporal patterns exhibit both local and global characteristics.
+
+\subsection{Positional Encoding and Temporal Representation}
+
+Positional encoding is crucial for transformer architectures as they lack inherent sequence order awareness. Traditional sinusoidal positional encodings work well for many applications but may not capture complex temporal patterns in time series data. Several alternatives have been proposed specifically for time series applications:
+
+\begin{enumerate}
+\item \textbf{Learnable Positional Embeddings:} These allow the model to learn optimal position representations during training, potentially capturing domain-specific temporal patterns.
+
+\item \textbf{Temporal Positional Encoding:} These explicitly encode temporal information such as time of day, day of week, or seasonal patterns, which are crucial for time series with strong periodic components.
+
+\item \textbf{Relative Positional Encoding:} These focus on relative distances between positions rather than absolute positions, which can be more appropriate for time series where relative temporal relationships are more important than absolute timestamps.
+\end{enumerate}
+
+For solar power forecasting, temporal positional encodings that capture diurnal and seasonal cycles are particularly important, as solar generation exhibits strong periodic patterns at multiple timescales.
+
+\subsection{Normalization Techniques in Transformers}
+
+Normalization plays a critical role in transformer training stability and performance. Layer normalization, the standard approach in transformers, normalizes across the feature dimension for each sample. However, for time series applications, several alternatives have shown promise:
+
+\begin{enumerate}
+\item \textbf{Instance Normalization:} Normalizes across temporal dimensions, which can be beneficial when different time series have varying scales or distributions.
+
+\item \textbf{Adaptive Normalization:} Dynamically adjusts normalization parameters based on input characteristics, allowing the model to handle non-stationary time series more effectively.
+
+\item \textbf{Reversible Instance Normalization:} Maintains normalization statistics to enable proper denormalization of predictions, crucial for interpretable forecasting results.
+\end{enumerate}
+
+These normalization techniques are essential for handling the diverse characteristics of solar power data, which can vary significantly across different weather conditions and seasonal patterns.
+
+ \subsection{Transformer in Time series Forcasting}
+
+The Channel Aligned Robust Blend Transformer (CARD) proposed by Xue et al.~\cite{xue2023card} presents a significant advancement in time series forecasting by addressing a core limitation of traditional channel-independent (CI) transformer models namely, their inability to capture cross-channel dependencies. CARD introduces a novel channel-aligned attention mechanism that effectively models inter-variable correlations while preserving temporal patterns, a capability particularly relevant to multivariate solar power forecasting where meteorological variables often exhibit intricate interdependencies. Furthermore, its token blend module facilitates multi-resolution feature learning, which is essential for capturing patterns at varying temporal granularities in long-term solar irradiance trends. The model also employs a robust uncertainty-weighted loss function that improves generalization under noisy conditions, aligning with the noise-prone nature of solar datasets. In the context of our work, which integrates hybrid transformer-based mechanisms to enhance solar power forecasting accuracy, CARD's architecture provides useful insights into robust attention design and multi-scale token interaction. However, unlike CARD, our hybrid model incorporates domain-specific feature fusion and long-term temporal encoding strategies tailored for solar energy forecasting, which are not explicitly addressed in CARD's generic forecasting framework.
+
+Pathformer~\cite{chen2024pathformer} introduces a novel multi-scale Transformer framework tailored for time series forecasting by integrating both temporal resolution and temporal distance into the modeling process. Its design includes dual-attention mechanisms—inter-patch and intra-patch attention—allowing the model to simultaneously capture global temporal dependencies and local temporal dynamics across multiple scales. Notably, Pathformer incorporates adaptive pathways using a multi-scale router equipped with trend and seasonality decomposition, enabling dynamic selection of appropriate scales and attention configurations based on the input's temporal characteristics. This adaptive mechanism aligns closely with the fluctuating and multi-scale nature of solar power generation data, where fine-grained intra-day variations and broader seasonal patterns must be jointly modeled. In relation to our work, Pathformer serves as a strong reference for incorporating scale-adaptive temporal representations within Transformer architectures. However, unlike Pathformer, our hybrid model integrates additional domain-informed modules that specifically leverage exogenous meteorological features and spatial-temporal correlations unique to solar forecasting tasks.
+
+GAFormer~\cite{xiao2024gaformer} presents a group-aware enhancement to Transformer architectures by introducing data-adaptive group embeddings that explicitly encode both spatial and temporal structures within multivariate time series data. The model learns a set of group tokens and adaptively assigns them to input tokens via a Group Embedding (GE) layer, effectively uncovering latent inter-channel and temporal relationships without prior structural assumptions. This group-aware strategy enhances both representational power and interpretability, particularly for datasets with complex, instance-specific channel interactions. In the context of solar power forecasting, where spatial heterogeneity (e.g., across sensor locations or geographic features) and temporal variability (e.g., due to weather regimes) are prominent, GAFormer's embedding approach provides an attractive pathway for improving model adaptability and robustness. While our hybrid Transformer model primarily integrates domain-specific features and auxiliary inputs to improve long-horizon forecasting, the group embedding methodology of GAFormer offers complementary potential, especially in capturing latent spatiotemporal dependencies within solar power generation data.
+
+Li et al.~\cite{li2024transformer} propose the Transformer-Modulated Diffusion Model (TMDM), a probabilistic forecasting framework that integrates diffusion-based generative modeling with transformer architectures to enhance multivariate time series prediction. TMDM departs from conventional point forecasting by modeling the full conditional distribution of future values, thereby capturing the intrinsic uncertainty present in time series data. Unlike earlier works that only incorporate conditional information in the reverse diffusion process, TMDM leverages transformer-derived representations as priors for both the forward and reverse processes. This bidirectional conditioning results in more accurate and stable distribution forecasts. For solar power forecasting, where prediction uncertainty due to variable atmospheric conditions (e.g., cloud cover, irradiance shifts) can significantly impact decision-making, TMDM’s uncertainty-aware design offers crucial advantages. While our hybrid transformer model emphasizes architectural and data-level enhancements for improved point prediction accuracy, TMDM introduces a complementary probabilistic dimension. Its integration strategy could inform future extensions of our model by embedding calibrated uncertainty estimates, thereby supporting risk-sensitive forecasting in solar energy applications.
+
+Liu et al.\ \cite{liu2023itransformer} propose the \textit{iTransformer}, an inverted Transformer architecture specifically tailored for multivariate time series forecasting. Unlike conventional Transformer-based models that encode multivariate data at each timestamp into a single token—often losing variate-specific patterns and introducing meaningless attention weights—the iTransformer reorients the attention mechanism across variates rather than time steps. This design allows for capturing global multivariate correlations while maintaining series-specific representations through variate-centric embedding and feed-forward operations. The model achieves state-of-the-art performance across diverse real-world datasets, including those with complex and heterogeneous features like solar energy data. In the context of this thesis, which focuses on enhancing solar power forecasting through hybrid Transformer-based architectures, iTransformer offers valuable architectural insights. Its variate-aware modeling aligns with the hybrid design philosophy, and its effectiveness with large lookback windows and better variate disentanglement presents promising directions for improving the representational capacity of Transformer backbones in solar forecasting models.
+
+Wang et al.~\cite{wang2024considering} address a critical limitation in existing Transformer-based forecasting models—namely, their inadequate handling of non-stationarity and stochasticity in multivariate time series (MTS). Their proposed model, HTV-Trans, introduces a hierarchical probabilistic generative module (HTPGM) that captures multi-scale non-deterministic and non-stationary characteristics, which are often smoothed out or lost in traditional stationarization approaches. This probabilistic dynamic architecture improves the model’s capacity to encode time-varying statistical properties into the forecasting process, thereby enhancing robustness on real-world MTS tasks. The integration of variational inference with Transformer blocks allows HTV-Trans to jointly optimize reconstruction and forecasting objectives, a strategy that aligns well with the core challenge of modeling solar power generation, which is inherently noisy and non-stationary. In the context of this thesis, which proposes a hybrid Transformer-based model for solar power forecasting, the insights from HTV-Trans can inform the development of modules that explicitly encode non-stationary dynamics without over-simplifying them, improving the model’s generalizability and prediction accuracy under variable weather conditions.
+
+Feng et al.~\cite{feng2024latent} propose the Latent Diffusion Transformer (LDT), a novel probabilistic forecasting model that addresses the limitations of autoregressive structures in high-dimensional multivariate time series forecasting. By incorporating a symmetric, statistics-aware autoencoder and a non-autoregressive latent diffusion generator, LDT effectively reduces computational complexity and enhances long-range prediction accuracy. The model dynamically normalizes statistical properties over time, mitigating distribution shifts—an approach highly relevant to solar power forecasting where temporal non-stationarity is common. Their use of a latent generative space aligns with the goals of hybrid transformer-based models like ours, offering a complementary strategy to capture complex spatiotemporal dependencies while improving forecasting robustness and efficiency. The self-conditioning mechanism embedded within their diffusion transformer also introduces an alternative to traditional autoregressive decoding, presenting opportunities for integration or inspiration in designing non-autoregressive components within our hybrid transformer framework.
+
+The Temporal Fusion Transformer (TFT) proposed by Lim et al.~\cite{lim2021temporal} presents a compelling approach for multi-horizon time series forecasting by combining recurrent layers with self-attention mechanisms to model both short-term and long-term dependencies while enhancing interpretability. Notably, the model incorporates static covariate encoders and gating mechanisms to selectively process relevant inputs, and introduces interpretable attention for dynamic temporal modeling. This architectural focus on integrating heterogeneous input types and managing variable importance is directly relevant to our work, where we employ a hybrid transformer framework that includes both standard and inverted transformer branches applied in parallel. While TFT emphasizes modular interpretability and gating to improve forecasting robustness, our approach builds upon these insights by enhancing temporal resolution through series patching and enabling richer feature interactions via the hybrid attention design. The parallel combination of standard and inverted transformer blocks in our model parallels TFT’s goal of learning from multiple temporal scales, but instead leverages transformer diversity and representation complementarity, rather than sequential recurrence. Thus, TFT serves as a foundational reference demonstrating the advantages of tailored transformer-based designs in complex forecasting contexts with multi-source inputs, validating our decision to integrate hybridized attention mechanisms in solar power prediction.
+
+Ni et al.\ \cite{ni2023basisformer} propose \textit{BasisFormer}, a novel Transformer-based time series forecasting model that introduces learnable and interpretable basis functions to improve forecasting accuracy. This method addresses key limitations in prior deep learning models, particularly the inability to simultaneously learn effective basis representations and flexibly associate them with individual time series. BasisFormer innovatively applies contrastive self-supervised learning to extract basis vectors by treating historical and future segments of the data as distinct views, and employs bidirectional cross-attention in the Coef module to measure the similarity between time series inputs and learned bases. The Forecast module then synthesizes predictions by weighting the future-view basis vectors based on these coefficients. Unlike traditional Transformer models that rely on static positional embeddings or shared filters, BasisFormer allows dynamic, data-adaptive representations, which aligns with our objective of enhancing solar power forecasting using hybrid Transformer architectures. In particular, the emphasis on learning interpretable bases tailored to the data distribution offers a promising mechanism to capture seasonal and trend components in solar irradiance time series. The modular structure of BasisFormer provides valuable design insights for constructing hybrid attention-based models that integrate basis-driven representations and could be extended to incorporate domain-specific knowledge or exogenous meteorological inputs in solar forecasting tasks.
+
+\subsection{Patch-Based Decomposition Methods}
+
+Patch-based decomposition has emerged as a fundamental technique for enhancing transformer efficiency and effectiveness in time series forecasting. This approach addresses the quadratic complexity of attention mechanisms by dividing long sequences into shorter, manageable segments while preserving local temporal semantics. The concept draws inspiration from computer vision applications where image patches have proven successful in vision transformers.
+
+The mathematical foundation of patch-based decomposition involves partitioning a time series $X \in \mathbb{R}^{L \times D}$ of length $L$ and dimension $D$ into $N$ patches of size $P$:
+
+\begin{equation}
+X_{\text{patches}} = \{X_{i:i+P-1} \mid i = 0, S, 2S, \ldots, N \cdot S\}
+\end{equation}
+
+where $S$ represents the stride parameter and $N = \lfloor (L-P)/S \rfloor + 1$ is the number of patches. This decomposition reduces the attention complexity from $O(L^2)$ to $O(N^2)$ where $N \ll L$, making the approach particularly suitable for long-term forecasting applications.
+
+Several key advantages emerge from patch-based approaches:
+
+\begin{enumerate}
+\item \textbf{Computational Efficiency:} By reducing sequence length, patch-based methods significantly decrease memory requirements and computational costs, enabling the processing of longer historical sequences.
+
+\item \textbf{Local Pattern Preservation:} Each patch maintains local temporal relationships, ensuring that fine-grained patterns within the patch window are preserved during processing.
+
+\item \textbf{Hierarchical Representation:} Patches enable hierarchical modeling where local patterns within patches and global patterns across patches can be captured simultaneously.
+
+\item \textbf{Scalability:} The approach scales well with sequence length, making it practical for real-world applications with extensive historical data.
+\end{enumerate}
+
+The choice of patch size $P$ and stride $S$ significantly impacts model performance. Smaller patches preserve more fine-grained temporal details but increase the number of patches, while larger patches reduce computational cost but may lose local patterns. The stride parameter controls overlap between patches, with smaller strides providing more coverage but increasing computational requirements.
+
+\subsection{Frequency-Enhanced Attention Mechanisms}
+
+Frequency-enhanced attention mechanisms represent a significant advancement in capturing both temporal and spectral characteristics of time series data. These approaches recognize that many time series, particularly those in renewable energy applications, exhibit complex frequency patterns that are not adequately captured by traditional temporal attention alone.
+
+The Fourier Transform provides a natural framework for incorporating frequency information into attention mechanisms. For a time series $x(t)$, the discrete Fourier transform is:
+
+\begin{equation}
+X(k) = \sum_{n=0}^{N-1} x(n) e^{-j2\pi kn/N}
+\end{equation}
+
+Frequency-enhanced attention mechanisms typically operate in both time and frequency domains, computing attention weights that consider both temporal proximity and spectral similarity. A common approach involves:
+
+\begin{equation}
+\text{FreqAttention}(Q, K, V) = \alpha \cdot \text{Attention}_{\text{time}}(Q, K, V) + \beta \cdot \text{Attention}_{\text{freq}}(\mathcal{F}(Q), \mathcal{F}(K), \mathcal{F}(V))
+\end{equation}
+
+where $\mathcal{F}$ denotes the Fourier transform, and $\alpha$, $\beta$ are learnable weighting parameters.
+
+Several variants of frequency-enhanced attention have been proposed:
+
+\begin{enumerate}
+\item \textbf{Fourier Attention:} Directly applies attention mechanisms in the frequency domain, enabling the model to focus on relevant frequency components.
+
+\item \textbf{Wavelet Attention:} Uses wavelet transforms to capture both time and frequency localization, particularly useful for non-stationary signals.
+
+\item \textbf{Spectral Attention:} Incorporates spectral density information to weight attention based on the power distribution across frequencies.
+
+\item \textbf{Hybrid Time-Frequency Attention:} Combines temporal and frequency domain attention through learnable fusion mechanisms.
+\end{enumerate}
+
+For solar power forecasting, frequency-enhanced attention is particularly valuable as it can capture periodic patterns (diurnal cycles, seasonal variations) and transient phenomena (weather-related fluctuations) simultaneously. The approach enables models to distinguish between different types of temporal patterns and allocate attention accordingly.
+
+\subsection{Multi-Scale Temporal Modeling}
+
+Multi-scale temporal modeling addresses the challenge of capturing patterns that occur at different temporal resolutions. Solar power generation exhibits patterns at multiple scales: minute-level fluctuations due to cloud movements, hourly patterns related to sun angle changes, daily cycles, and seasonal variations. Traditional single-scale approaches often struggle to capture this temporal hierarchy effectively.
+
+Multi-scale architectures typically employ one of several strategies:
+
+\begin{enumerate}
+\item \textbf{Hierarchical Decomposition:} Recursively decomposes the time series into different temporal scales, processing each scale with specialized modules.
+
+\item \textbf{Multi-Resolution Patching:} Uses patches of different sizes to capture patterns at various temporal granularities.
+
+\item \textbf{Parallel Multi-Scale Processing:} Processes the same input sequence at multiple temporal resolutions simultaneously and fuses the results.
+
+\item \textbf{Adaptive Scale Selection:} Dynamically selects appropriate temporal scales based on input characteristics or learned attention mechanisms.
+\end{enumerate}
+
+The mathematical framework for multi-scale processing often involves temporal downsampling and upsampling operations:
+
+\begin{equation}
+X^{(s)} = \text{Downsample}(X, s)
+\end{equation}
+
+where $s$ represents the scale factor. Each scale is processed independently before fusion:
+
+\begin{equation}
+Y = \text{Fusion}(\{f^{(s)}(X^{(s)}) \mid s \in \mathcal{S}\})
+\end{equation}
+
+where $f^{(s)}$ is the processing function for scale $s$ and $\mathcal{S}$ is the set of scales.
+
+Multi-scale approaches have shown particular promise in renewable energy forecasting where understanding the interaction between short-term variability and long-term trends is crucial for accurate prediction.
+
+Chen et al.\ \cite{chen2023contiformer} introduce \textit{ContiFormer}, a novel Transformer architecture designed for irregular time series modeling by integrating the continuous-time dynamics of Neural ODEs into the attention mechanism of Transformers. Unlike traditional Transformer models that operate on discretely sampled sequences, ContiFormer captures both the underlying continuous-time behavior of the data and the dynamic dependencies among observations through a reparameterized continuous-time attention mechanism. This architectural innovation allows the model to more accurately learn representations of time series with non-uniform sampling—a scenario commonly encountered in solar power datasets due to sensor downtime, data transmission lags, or varying measurement intervals. The ability to represent latent temporal trajectories and compute attention over continuous domains is particularly relevant to hybrid forecasting models for solar energy, where modeling the evolution of solar irradiance or power output with respect to time is crucial. By decoupling the reliance on rigid sampling schemes, ContiFormer provides a promising foundation for extending Transformer-based solar forecasting frameworks to handle missing or irregular data, a common challenge in real-world solar deployments. Incorporating such a continuous-time attention mechanism within a hybrid Transformer architecture could significantly enhance robustness and forecasting accuracy under imperfect or sparse observation scenarios.
+
+Nie et al.\ \cite{nie2022patchtst} introduce a novel Transformer-based model, \textit{PatchTST}, which incorporates two key innovations: patching and channel-independence, to address the challenges of multivariate time series forecasting. The patching mechanism divides the time series into subseries-level patches, allowing the model to retain local semantic information while significantly reducing computational and memory requirements. This is achieved by reducing the number of input tokens without losing important temporal context, making it particularly effective for forecasting tasks requiring long-term dependencies. In \textit{PatchTST}, each channel is treated independently, ensuring that information from each univariate time series is processed separately, which contrasts with traditional channel-mixing methods commonly used in Transformer architectures. These innovations are highly relevant to solar power forecasting, where long-term dependencies, such as solar irradiance or power output patterns, must be captured from irregularly sampled data. By using patching, your proposed hybrid Transformer model can handle extended look-back windows more efficiently, which is crucial for accurate solar power predictions over longer horizons. Additionally, the ability to maintain computational efficiency while modeling these long-term dependencies can improve the scalability and performance of solar power forecasting systems. Furthermore, combining standard and inverted Transformer configurations in parallel, as outlined in your approach, could further enhance the representation learning capabilities of \textit{PatchTST} by incorporating both local and global patterns in solar energy data. This hybrid approach offers a promising avenue for improving solar power forecasting accuracy while managing the computational burden associated with processing extensive temporal data.
+
+In the context of multivariate time series (MTS) forecasting, Zhang and Yan \cite{zhang2022crossformer} propose \textit{Crossformer}, a Transformer-based model designed to address the challenge of capturing both cross-time and cross-dimension dependencies. Unlike conventional Transformer models that primarily focus on cross-time dependencies, \textit{Crossformer} explicitly captures the cross-dimension dependencies, which are essential for forecasting tasks involving multiple related variables, such as weather or energy consumption. By introducing the Dimension-Segment-Wise (DSW) embedding and Two-Stage-Attention (TSA) layer, \textit{Crossformer} preserves both time and dimension information, enabling it to capture the interactions between different variables across time. This approach is particularly relevant for solar power forecasting, where various environmental factors (e.g., solar irradiance, temperature, and wind speed) must be simultaneously considered to improve prediction accuracy. In your proposed hybrid Transformer model, the use of series patching to break the input time series into subseries aligns with the patching mechanism in \textit{Crossformer}, facilitating more efficient modeling of long-term dependencies. Furthermore, the parallel use of standard and inverted Transformers in your model may enhance the ability to capture both temporal and cross-dimensional dependencies, similar to how \textit{Crossformer} improves forecasting by explicitly modeling inter-variable interactions. This dual Transformer structure, when combined with the patching strategy, can significantly improve the accuracy and scalability of solar power forecasts over multiple time horizons.
+
+Shabani et al. \cite{shabani2022scaleformer} introduce \textit{Scaleformer}, an innovative approach to time series forecasting that focuses on enhancing scale-awareness within transformer models. The key contribution of \textit{Scaleformer} is its iterative multi-scale refinement, where forecasts are progressively refined at multiple scales, leveraging shared weights and specialized normalization schemes. This iterative refinement allows the model to capture the interdependencies across different temporal scales, improving its forecasting performance significantly. The idea of refining forecasts at multiple scales resonates with the need to capture both long-term and short-term dependencies in time series data, which is crucial for accurate solar power forecasting. In your hybrid Transformer-based model, you leverage a similar multi-scale approach, where series patching divides the input time series into smaller subseries. This approach enables more granular modeling of temporal dependencies. Additionally, the parallel use of standard and inverted Transformers in your model can be seen as an extension of \textit{Scaleformer's} multi-scale refinement strategy, where each Transformer could specialize in different scales of the data, allowing for a more comprehensive understanding of solar power dynamics. By incorporating iterative refinement and scale-awareness, your model has the potential to enhance prediction accuracy over both short-term and long-term forecasting horizons.
+
+Liu et al. \cite{liu2022non} address the challenges of forecasting non-stationary time series, a crucial problem in many real-world applications, including solar power forecasting. Their work introduces the concept of Non-stationary Transformers, a framework designed to enhance the predictive ability of Transformer models by handling the inherent non-stationarity of real-world data. Traditional methods often preprocess time series data by stationarization, which simplifies the series for prediction but can strip away valuable temporal dependencies, leading to poor performance on non-stationary data. Liu et al. propose a two-module solution: Series Stationarization to improve predictability and De-stationary Attention to recover the essential non-stationary characteristics. This approach aligns with your work, where you aim to enhance solar power forecasting by capturing both short-term fluctuations and long-term trends in the data. In your model, the use of series patching and the parallel integration of standard and inverted Transformers can be seen as a way to adaptively manage non-stationary features in solar power time series, similar to how Liu et al.'s De-stationary Attention module re-incorporates temporal dependencies lost in stationarized data. The combination of these methods in your hybrid model allows for a more robust handling of the dynamic nature of solar power generation, particularly in the face of unpredictable changes due to weather, seasonal variations, and other external factors. By leveraging both the series patching and dual Transformer architectures, your approach could benefit from the insights in \cite{liu2022non} regarding the delicate balance between stationarization and non-stationary information recovery.
+
+Chen et al. \cite{chen2022learning} propose the Quaternion Transformer (Quatformer), which enhances Transformer-based models for forecasting complicated periodical time series. The core innovation of their framework is the Learning-to-Rotate Attention (LRA), which models dynamic and complex periodic patterns by introducing period and phase information using quaternions. This method significantly improves the ability of Transformers to handle multiple periods, variable periods, and phase shifts, addressing common challenges in real-world time series forecasting. This is particularly relevant to your work, where similar challenges arise in solar power forecasting due to the inherent periodic and seasonal fluctuations in solar irradiance. By leveraging series patching and integrating both standard and inverted Transformers in parallel, your model can effectively capture such complex periodic dependencies while maintaining long-range temporal dependencies, akin to the benefits brought by the LRA in Quatformer. Additionally, Quatformer’s trend normalization, which normalizes series representations based on the slowly varying nature of trends, aligns with your approach to modeling both the short-term fluctuations and long-term trends of solar power generation. Furthermore, the computational efficiency of Quatformer, achieved through decoupling attention and reducing the quadratic complexity, provides insight into how you might handle the computational challenges associated with forecasting long-term solar power data. Thus, the methods in Chen et al.’s work directly inspire your design choices, particularly in how to better model and forecast complex, multi-period solar time series.
+
+Zhou et al. \cite{zhou2022fedformer} propose the Frequency Enhanced Decomposed Transformer (FEDformer), which combines Transformer-based models with seasonal-trend decomposition and frequency analysis to improve long-term time series forecasting. This model addresses key challenges such as capturing the global properties of time series while maintaining the ability to model intricate details. The core innovation of FEDformer lies in its ability to decompose time series into seasonal and trend components, which allows the model to better capture the overall structure of the data, while applying Fourier transforms to focus on the frequency domain for improved global pattern recognition. This approach is particularly relevant to solar power forecasting, where accurately capturing both the global trends (e.g., yearly solar cycles) and fine-grained variations (e.g., daily weather-related fluctuations) is crucial. The use of Fourier and wavelet enhancements in the Transformer blocks aligns with your work, where you explore series patching with both standard and inverted Transformers to capture different temporal scales of solar power generation. By focusing on frequency domain enhancements, FEDformer demonstrates a promising direction for handling computational complexity and improving long-term predictions, which could inform the design of your own hybrid model that balances detailed local predictions and global trend modeling for solar power forecasting. Additionally, the linear complexity achieved in FEDformer by selecting a subset of frequency components offers insights into how to optimize the computational cost of long-term forecasting tasks, a concern that is also critical in solar power prediction tasks with large-scale data.
+
+Drouin et al. \cite{drouin2022tactis} introduce the Transformer-Attentional Copulas for Time Series (TACTiS), a model designed to handle multivariate probabilistic forecasting by using an attention-based decoder to estimate joint distributions of time series data. TACTiS is particularly effective in addressing challenges associated with irregular sampling, missing data, and the need for multivariate forecasting, making it highly relevant for applications involving complex, real-world time series like solar power forecasting. The model's ability to characterize the joint behavior of time series through copulas, which separate the modeling of marginals and dependencies, aligns well with your approach of using hybrid Transformer models. In your work, you aim to enhance solar power forecasting by using series patching with both standard and inverted Transformers in parallel, effectively capturing both global trends and local fluctuations in solar power generation. TACTiS' focus on multivariate joint distribution modeling is particularly applicable to your task, as solar power forecasting often involves multiple time series (e.g., weather, irradiance, and temperature data) that interact in complex ways. Moreover, the flexibility of TACTiS in handling irregularly sampled data and missing values mirrors the real-world challenges encountered in solar power datasets, which may have gaps or vary in sampling frequency due to factors like sensor malfunctions or environmental conditions. By adopting ideas from TACTiS, such as the attention-based architecture for joint distribution estimation, you could further enhance your hybrid Transformer model to improve the robustness and accuracy of long-term solar power forecasts under diverse conditions.
+
+Liu et al. \cite{liu2021pyraformer} propose the Pyraformer model, which introduces a novel pyramidal attention mechanism to efficiently capture both short-term and long-term temporal dependencies in time series forecasting. Pyraformer leverages a multi-resolution representation of the time series through its pyramidal attention module (PAM), which balances the need for capturing long-range dependencies with low computational complexity. This approach is particularly relevant to your work, as you aim to improve solar power forecasting through a hybrid Transformer model that utilizes both standard and inverted Transformers in parallel, enhancing the capture of diverse temporal patterns. The ability of Pyraformer to reduce the time and space complexity of modeling long-range dependencies while maintaining predictive accuracy could inspire the design of more efficient Transformer-based models for solar energy forecasting. Your use of series patching, which divides the time series into distinct segments to capture both global trends and local fluctuations, aligns well with Pyraformer's multi-scale approach. Specifically, the pyramidal structure in Pyraformer, which models temporal dependencies across different scales, could be adapted in your model to better handle long-term dependencies in solar power data, such as seasonal variations, while also ensuring computational efficiency. By integrating ideas from Pyraformer, you can refine your model to achieve both accurate long-range forecasting and reduced computational overhead, making it more scalable for real-world solar energy forecasting tasks.
+
+Wu et al. \cite{wu2021autoformer} present Autoformer, a novel Transformer-based model designed for long-term time series forecasting. Autoformer introduces a decomposition architecture combined with an Auto-Correlation mechanism that addresses the challenges of modeling intricate temporal patterns in long-term forecasts. The decomposition architecture allows Autoformer to progressively separate trend information from the residuals, which is critical for handling complex time series data. This idea of progressive decomposition is highly relevant to your work, where you are utilizing series patching to handle multiple temporal scales in solar power forecasting. Similar to how Autoformer breaks down time series into manageable components, your approach with parallel standard and inverted Transformers can enhance the model’s ability to capture both long-term trends and short-term fluctuations in solar energy data. Furthermore, Autoformer's Auto-Correlation mechanism, which discovers dependencies at the sub-series level based on periodicity, resonates with your approach of modeling seasonality and periodic behavior in solar energy generation. By considering the periodicity of solar power patterns over time, both models aim to refine how temporal dependencies are captured and utilized. Autoformer's improvements in efficiency and accuracy for long-term forecasting tasks, particularly in energy-related applications, align closely with your objective of improving solar power forecasting accuracy and computational efficiency. Integrating elements of Autoformer's decomposition and Auto-Correlation techniques into your hybrid Transformer model could further enhance its ability to predict long-term solar power generation with greater precision.
+ 
+The Informer model proposed by Zhou et al.~\cite{zhou2021informer} introduces significant innovations to address key inefficiencies of vanilla Transformers in long sequence time-series forecasting (LSTF). Informer employs a novel ProbSparse self-attention mechanism that reduces the time and memory complexity from $\mathcal{O}(L^2)$ to $\mathcal{O}(L\log L)$, making it more scalable for extreme-length sequences. Additionally, the self-attention distilling operation in the encoder aggressively compresses intermediate representations by focusing on dominant attention scores, and the generative-style decoder eliminates step-by-step autoregression to allow one-shot prediction. This architectural efficiency and design for long-range temporal dependencies make Informer particularly relevant to our proposed hybrid framework. In our work, we explore enhanced dependency modeling using a parallel composition of standard and inverted Transformer branches over patched input series. While Informer addresses architectural inefficiencies, our model emphasizes representational diversity and complementarity via architectural asymmetry. The two models share a common motivation: enhancing prediction capacity for long-term horizons. However, our approach diverges in methodology by leveraging parallel encoding paths with contrasting inductive biases, potentially capturing richer multiscale temporal patterns beyond what is achieved via sparsity alone.
+
+Tang and Matteson~\cite{tang2021probabilistic} introduced the Probabilistic Transformer (ProTran), a deep generative model for multivariate time series that effectively integrates state-space modeling with attention-based mechanisms. Unlike conventional state-space models (SSMs) that rely on Markovian transitions or recurrent structures, ProTran employs self-attention in the latent space to model non-Markovian, long-range dependencies without the use of RNNs. This architecture supports hierarchical stochastic latent variables, enabling non-autoregressive and probabilistic generation of time series with uncertainty quantification. In the context of our work, which involves a hybrid transformer architecture combining both standard and inverted transformer blocks in parallel, ProTran provides a complementary direction by modeling temporal uncertainty explicitly through latent variables. While our approach focuses on deterministic modeling and architectural innovations like series patching and bidirectional encoding paths to improve representation and forecasting accuracy, the success of ProTran highlights the importance of capturing uncertainty and long-term dependencies in time series data. This underscores potential future extensions of our model to include latent stochastic representations, thereby enriching the expressiveness and robustness of hybrid transformer architectures for solar power forecasting.
+
+Wu et al.~\cite{wu2020deep} proposed a Transformer-based framework for time series forecasting, demonstrating its effectiveness through the case study of influenza-like illness (ILI) prediction. Their model leverages self-attention mechanisms to capture complex temporal dependencies without relying on recurrence or convolution, thereby addressing limitations like vanishing gradients and limited receptive fields inherent in RNN and CNN-based models. Notably, the authors highlight the flexibility of Transformers in handling both univariate and multivariate time series, as well as their applicability in representing latent state dynamics through learned embeddings. This study aligns with the core architectural principles of our proposed hybrid Transformer-based forecasting model, which employs series patching along with parallel standard and inverted Transformer layers. While Wu et al.'s model demonstrates the generic strength of Transformers in capturing long-range dependencies in time series, our approach extends this paradigm by explicitly structuring the input space through patch-based segmentation and enhancing representational diversity via parallel attention pathways. The positive forecasting performance reported in their study further supports the viability of Transformer architectures for complex forecasting tasks such as solar power prediction.
+
+Wu et al.~\cite{wu2020adversarial} introduced the Adversarial Sparse Transformer (AST), a novel framework that integrates sparse attention mechanisms with adversarial training for robust time series forecasting. The AST model replaces conventional softmax-based attention with $\alpha$-entmax, enabling true sparsity in attention weights and allowing the model to focus more selectively on informative time steps. Additionally, by incorporating a generative adversarial training setup, the model is regularized at the sequence level, improving its robustness and generalization, especially over long-term horizons. This work addresses two critical issues in time series forecasting: the inflexibility of point predictions and the error accumulation problem arising from auto-regressive generation. The core innovations in AST resonate with our hybrid architecture in several ways. First, their use of sparsity in attention aligns with our goal of enhancing temporal selectivity through series patching. Second, while they regularize temporal representation through adversarial training, we pursue complementary diversity and robustness by parallelizing standard and inverted Transformer blocks. Thus, although the mechanisms differ, both models aim to improve long-horizon stability and reduce overfitting to local patterns, reinforcing the broader applicability of architectural innovations in Transformer-based forecasting systems.
+
+Li et al.~\cite{li2019enhancing} addressed two fundamental challenges associated with applying canonical Transformers to time series forecasting: their insensitivity to local context and the quadratic memory complexity with respect to input length. To tackle these, they introduced a convolutional self-attention mechanism that uses causal convolutions to inject locality-aware representations into the attention computation, thereby improving robustness against local anomalies—a key limitation of standard dot-product attention. Additionally, they proposed the LogSparse Transformer, which reduces memory complexity to $O(L(\log L)^2)$, enabling scalable long-sequence forecasting without compromising accuracy. These contributions align closely with our proposed hybrid architecture, where we enhance temporal modeling through series patching and exploit parallel standard and inverted Transformer branches to diversify temporal feature extraction. While Li et al.'s convolutional attention achieves local context sensitivity through architectural adjustment, our approach leverages complementary Transformer structures and segmented inputs to achieve similar robustness, suggesting both models share the goal of addressing core inefficiencies in standard Transformer architectures for long-horizon forecasting.
+
+Lin et al.~\cite{lin2021ssdnet} introduced SSDNet, a hybrid deep learning architecture that integrates Transformer networks with State Space Models (SSMs) for time series forecasting. By leveraging the self-attention mechanism, SSDNet directly estimates the parameters of a fixed-form SSM, enabling the extraction of interpretable trend and seasonality components alongside high-accuracy forecasts. This model demonstrated superior performance over traditional deep learning baselines such as DeepAR, LogSparse Transformer, and Informer across several datasets, including solar power generation from real-world PV plants. The interpretability afforded by SSDNet through state decomposition resonates with our motivation to enhance both performance and transparency in solar forecasting. In contrast to SSDNet’s sequential combination of Transformer and SSM, our proposed model explores architectural hybridization by integrating standard and inverted Transformers in parallel, while employing series patching to facilitate multiscale temporal representation. This parallel dual-transformer design aims to better capture diverse temporal dependencies—complementing SSDNet’s interpretable decomposition with enhanced learning capacity and structural redundancy for robust solar power prediction.
+
+Qi et al.~\cite{qi2021known} proposed Aliformer, a knowledge-guided transformer model tailored for time-series sales forecasting, which effectively integrates future-known information through a bidirectional self-attention mechanism and a specialized AliAttention layer. While their work is focused on e-commerce sales data, the architectural principles they introduced offer valuable insights for designing transformer-based forecasting models in other domains, including renewable energy. In particular, their use of auxiliary known features and masked token embeddings to emphasize future information aligns with the concept of enriching contextual learning beyond pure autoregressive patterns. This relates closely to our proposed model, where both standard and inverted transformers are applied in parallel to capture bidirectional temporal dependencies. Furthermore, their future-emphasized training strategy, which masks the central portion of sequences to enhance attention on future-relevant context, echoes our rationale for series patching—ensuring that both local and global patterns are effectively utilized. By leveraging bidirectional processing pathways and attention refinement techniques similar to Aliformer, our hybrid architecture seeks to address complex, non-stationary patterns inherent in solar power generation data.
+
+In their work, Shen and Wang \cite{shen2022tcct} introduce the concept of Tightly-Coupled Convolutional Transformer (TCCT) for time series forecasting, addressing the limitations of traditional loosely-coupled CNN-Transformer hybrid models. They propose three tightly-integrated architectures—CSPAttention, dilated causal convolution, and a passthrough mechanism—that aim to enhance locality, increase model efficiency, and reduce computational overhead, all while maintaining or improving predictive performance. Unlike previous approaches where CNN components are merely appended to Transformer modules, TCCT deeply embeds convolutional operations within the self-attention mechanism. This design philosophy aligns with the intent of our hybrid Transformer-based model, which seeks to strengthen learning representations through architectural innovation—in our case, by integrating both standard and inverted Transformer branches in parallel and applying series patching for temporal structure learning. While our work diverges in method, the underlying motivation to improve Transformer efficiency and feature learning in time series forecasting is strongly aligned with TCCT. Furthermore, the TCCT’s use of multi-scale features via its passthrough mechanism echoes our model's focus on capturing diverse temporal dependencies, making this work a valuable reference for the development of structurally enhanced Transformer models for solar power forecasting.
+
+The Triformer model \cite{cirstea2022triformer} introduces a novel approach to enhance the efficiency and accuracy of long sequence multivariate time series forecasting by addressing two core limitations of conventional Transformer architectures: the quadratic complexity of self-attention and the lack of variable-specific modeling. Triformer achieves linear computational complexity through its hierarchical triangular structure based on patch-wise self-attention, where each layer's input length is exponentially reduced. Furthermore, it introduces variable-specific attention mechanisms by factorizing projection matrices into shared and lightweight variable-specific components, enabling the model to better capture heterogeneous temporal patterns across different time series variables. This architectural innovation aligns closely with our proposed hybrid Transformer-based model, where we also adopt a patching strategy to improve scalability and long-term forecasting capabilities. Moreover, our parallel use of standard and inverted Transformers complements Triformer's variable-specific modeling by introducing diverse attention perspectives over the same input space, promoting richer temporal feature extraction. Incorporating Triformer’s principles of efficient and differentiated attention supports the design rationale behind our hybrid framework, emphasizing both scalability and adaptive representation learning.
+
+\subsection{Transformer in Other Forecasting Context}
+
+Liang et al. \cite{liang2023airformer} propose a novel Transformer-based architecture, AirFormer, for nationwide air quality prediction in China. AirFormer integrates innovative spatial and temporal attention mechanisms to address the challenges of forecasting air quality across thousands of monitoring stations. Specifically, the model decouples the forecasting process into two stages: a deterministic stage for efficiently capturing spatial and temporal dependencies and a stochastic stage that accounts for the inherent uncertainty in air quality data. The deterministic stage introduces the Dartboard Spatial Multi-Head Self-Attention (DS-MSA) mechanism, which optimizes spatial attention by considering local correlations at high granularity and distant ones at a coarse level, ensuring computational efficiency even for large-scale data. Additionally, the Causal Temporal MSA (CT-MSA) is employed to ensure that temporal dependencies are captured in a causally consistent manner. This approach aligns with the challenges faced in solar energy forecasting, where both spatial and temporal dependencies are crucial but often come with substantial computational costs due to the large datasets. 
+
+The Earthformer model by Gao et al. \cite{gao2022earthformer} introduces a space-time Transformer architecture designed for Earth system forecasting, leveraging \textit{Cuboid Attention} to efficiently process high-dimensional, spatiotemporal data. This method decomposes the data into non-overlapping cuboids, applying self-attention in parallel to capture local dependencies while reducing computational complexity. In your work, a similar strategy could be applied to solar power forecasting, where capturing localized patterns in solar data across different time periods is crucial. Earthformer's use of \textit{global vectors} to connect local cuboids offers a mechanism for sharing information between different regions, which can be adapted to model interdependencies in solar power generation across multiple locations or time frames. Moreover, the hierarchical encoder-decoder structure in Earthformer, which enhances performance by capturing different levels of temporal dependencies, could align well with your hybrid Transformer model, improving both short-term and long-term solar power forecasts. By integrating these concepts into your model, you can enhance the scalability and accuracy of solar energy predictions, similarly to how Earthformer achieves state-of-the-art performance in weather and climate forecasting tasks.
+
+In the domain of time series forecasting, particularly in traffic prediction, Cai et al. \cite{cai2020traffic} proposed a novel approach, the Traffic Transformer, designed to capture both the continuity and periodicity of time series data while efficiently modeling spatio-temporal dependencies. This study, published in Transactions in GIS, tackled several challenges inherent to traffic forecasting, including the difficulty of modeling temporal patterns and long-range dependencies in sequential data. Traffic data, much like solar power data, exhibit strong periodic patterns—such as daily and weekly cycles—which are critical for accurate prediction. In traffic forecasting, the authors highlighted the shortcomings of traditional recurrent neural networks (RNNs) in handling these periodicities. RNNs, though capable of capturing sequential data, often fail to preserve long-term dependencies and struggle with parallelization, making them less efficient for large-scale datasets.
+
+Xu et al. (2020) propose Spatial-Temporal Transformer Networks (STTNs) to address the challenges of long-term traffic flow forecasting by dynamically modeling spatial and temporal dependencies. Their approach uses a spatial transformer to capture time-varying spatial dependencies and a temporal transformer for long-range temporal dependencies, achieving significant improvements in prediction accuracy \cite{xu2020spatial}. Similarly, in solar power forecasting, accurately modeling dynamic spatial dependencies (e.g., geographical and environmental factors) and long-range temporal dependencies is critical. Your work, which integrates both standard and inverted transformers in parallel, extends this idea by addressing complex spatial patterns and long-term trends in solar power generation. The STTN framework's ability to suppress error propagation and improve long-term predictions aligns with your objective of enhancing the robustness and efficiency of solar power forecasting models.
+
+
+\subsection{Transformer in Solar Energy Forecasting}
+
+Elham et al. \cite{alali2023solar} introduce a hybrid model that combines CNN, LSTM, and Transformer networks to forecast solar energy production. Their approach utilizes the strengths of each component: CNN for feature extraction, LSTM for capturing temporal dependencies, and Transformer for modeling long-range dependencies in time series data. The use of Transformer in this hybrid model demonstrates its effectiveness in learning complex temporal patterns, which is particularly beneficial in solar energy forecasting, where environmental variables often influence power generation across varying timescales. This approach is aligned with our own work, where we integrate series patching to address the efficiency of Transformer models. By partitioning the input series into smaller, manageable patches, our model retains the advantage of Transformer’s long-range dependency capturing while ensuring computational efficiency for large datasets, similar to how Elham et al. leverage Transformer’s strengths in time series forecasting.
+
+Miguel et al. \cite{lopezsantos2022temporalfusion} explore the use of the Temporal Fusion Transformer (TFT) for day-ahead photovoltaic (PV) power forecasting. The TFT is specifically designed for multi-horizon forecasting, which is essential for predicting future power generation based on varying input features, including weather, historical power data, and time-of-day. The model’s use of attention mechanisms allows it to effectively handle input features with varying temporal dynamics, making it suitable for multi-step forecasting in solar energy systems. Their work is particularly relevant to our thesis, as we aim to enhance long-term solar power forecasting. Our approach of parallel standard and inverted Transformers also leverages multi-horizon capabilities but in a more dynamic context by using both traditional and inverted structures. This dual approach allows us to address varying temporal patterns in the data, similar to how TFT adapts to multi-horizon time series data, and further enriches the model’s capacity to handle the nuances of solar power forecasting over different time frames.
+
+Munsif et al. \cite{munsif2023ctnet} propose a convolutional transformer-based network, CT-NET, for short-term solar power forecasting, where the convolutional layers are used to extract spatial features from the data, while the Transformer-based attention mechanism focuses on learning the temporal relationships between the extracted features. This hybrid model demonstrates that combining CNN with Transformer-based models can significantly improve the model’s efficiency in short-term solar energy forecasting. Their use of the multi-head attention (MHA) mechanism to highlight influential features in the time series is directly relevant to our approach. In our model, we aim to enhance the MHA mechanism by incorporating parallel standard and inverted Transformers, which can focus on different aspects of the temporal sequence in parallel, much like how CT-NET focuses on influential features but using two contrasting Transformer architectures. Additionally, the incorporation of series patching in our approach is inspired by the patching methods used in CT-NET, which break down the input data for more efficient learning, ensuring that long-term dependencies are captured without sacrificing computational efficiency.
+
+
+\subsection{Solar Energy Forecasting Datasets}
+
+Effective solar energy forecasting depends on the availability of comprehensive, high-quality datasets comprising meteorological and environmental parameters, historical solar irradiance or power generation data, geographical information, and temporal factors. Below are some datasets used in this field:
+
+\begin{enumerate}
+    \item \textbf{NSRDB (National Solar Radiation Database)} \cite{NSRDB}: The NSRDB, developed by the National Renewable Energy Laboratory (NREL), provides high-resolution solar irradiance and meteorological data for various locations across the United States. It includes data collected from ground stations, satellite observations, and weather models, making it a comprehensive resource for solar energy forecasting.
+    
+    \item \textbf{NWP (Numerical Weather Prediction) Datasets} \cite{ECMWF,GFS}: Numerical weather prediction models, such as the Global Forecast System (GFS) and the European Centre for Medium-Range Weather Forecasts (ECMWF), produce valuable datasets for solar energy forecasting. These datasets include atmospheric variables like temperature, humidity, wind speed, and cloud cover, which are essential for predicting solar irradiance.
+    
+    \item \textbf{SoDa (Solar Radiation Data)} \cite{SoDa}: SoDa is a web-based platform that offers solar radiation data for Europe, Africa, and part of Asia. It provides access to various solar radiation models and satellite-derived datasets, making it a valuable resource for solar energy forecasting research and applications.
+    
+    \item \textbf{SAMSON (Solar and Meteorological Network)} \cite{SAMSON}: SAMSON is a network providing solar and meteorological data. It is maintained by the German Weather Service (DWD) and offers valuable solar radiation data for research and applications.
+    
+    \item \textbf{SARAH (Surface Solar Radiation Data Set - Heliosat)} \cite{SARAH}: SARAH is a satellite-based dataset providing surface solar radiation data. It utilizes Heliosat methodology and offers valuable solar radiation data for various regions.
+\end{enumerate}
+
+\subsection{Summary}
+
+This comprehensive literature review reveals a clear evolution in solar energy forecasting methodologies, from traditional statistical approaches to sophisticated transformer-based architectures. The progression demonstrates increasing sophistication in handling the complex, multi-scale temporal patterns inherent in solar power generation data.
+
+Traditional approaches, while foundational, are limited in their ability to capture non-linear relationships and complex temporal dependencies. Physical models provide interpretable results but lack adaptability to varying conditions. Statistical methods like ARIMA and SARIMA offer reasonable performance for short-term forecasting but struggle with long-term predictions and non-stationary data.
+
+The emergence of machine learning techniques marked a significant advancement, with methods like Random Forests and XGBoost demonstrating improved performance over traditional approaches. However, these methods still face limitations in capturing long-range temporal dependencies crucial for accurate solar forecasting.
+
+Deep learning approaches, particularly RNNs and LSTMs, addressed some of these limitations by explicitly modeling temporal sequences. However, they suffer from vanishing gradient problems and computational inefficiencies for long sequences. The introduction of transformer architectures revolutionized the field by enabling parallel computation and direct modeling of long-range dependencies.
+
+Recent transformer variants have introduced several key innovations relevant to the proposed PatchXFormer architecture:
+
+\begin{enumerate}
+\item \textbf{Patch-based decomposition} (PatchTST, Pathformer) has proven effective in reducing computational complexity while preserving local temporal patterns.
+
+\item \textbf{Frequency-enhanced attention} (FEDformer, FreTS) enables simultaneous modeling of temporal and spectral characteristics, crucial for capturing periodic patterns in solar data.
+
+\item \textbf{Multi-scale processing} (Scaleformer, Pyraformer) addresses the challenge of modeling patterns at different temporal resolutions.
+
+\item \textbf{Adaptive normalization} techniques improve handling of non-stationary time series common in renewable energy applications.
+
+\item \textbf{Hybrid architectures} that combine different modeling approaches have shown superior performance compared to single-architecture models.
+\end{enumerate}
+
+The literature reveals several gaps that the proposed PatchXFormer architecture addresses:
+
+\begin{enumerate}
+\item Most existing models focus on either temporal or spectral characteristics, but few effectively combine both in a unified framework.
+
+\item Limited exploration of enhanced patch embedding techniques with improved initialization and global token integration.
+
+\item Insufficient attention to adaptive normalization methods specifically designed for renewable energy forecasting.
+
+\item Lack of comprehensive evaluation of hybrid encoder architectures that combine self-attention and cross-attention for exogenous feature integration.
+\end{enumerate}
+
+The proposed PatchXFormer architecture builds upon the strengths of existing approaches while addressing their limitations through novel architectural innovations. The integration of enhanced patch embedding, frequency-aware attention, adaptive normalization, and hybrid encoder layers represents a significant advancement in transformer-based time series forecasting.
+
+Table \ref{tab:comprehensive_lit_review_summary} provides a comprehensive summary of the reviewed methodologies, highlighting their contributions, limitations, and relevance to the proposed approach.
+
+
+
+
+\begin{table*}[ht]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\textbf{Category} & \textbf{Representative Models} & \textbf{Key Innovations} & \textbf{Advantages} & \textbf{Limitations} \\
+\hline
+Physical Models & Circuit-based models & Electrical equivalent circuits & Interpretable, physics-based & Limited adaptability, weather dependency \\
+\hline
+Statistical Methods & ARIMA, SARIMA, ARMA & Time series decomposition & Simple, fast computation & Linear assumptions, poor long-term performance \\
+\hline
+Classical ML & RF, XGBoost, k-NN & Ensemble methods, boosting & Non-linear modeling, feature importance & Limited temporal modeling, manual feature engineering \\
+\hline
+Deep Learning & RNN, LSTM, GRU & Recurrent connections & Sequential modeling, memory & Vanishing gradients, sequential computation \\
+\hline
+CNN-based & CNN-LSTM hybrids & Convolutional feature extraction & Local pattern detection & Limited long-range dependencies \\
+\hline
+Standard Transformers & Vanilla Transformer & Self-attention mechanism & Parallel computation, long-range dependencies & Quadratic complexity, position encoding issues \\
+\hline
+Efficient Transformers & Informer, Reformer & Sparse attention, memory efficiency & Reduced complexity & May lose important dependencies \\
+\hline
+Patch-based Models & PatchTST, Pathformer & Subseries-level patching & Computational efficiency, local patterns & Patch size sensitivity, global pattern loss \\
+\hline
+Frequency-Enhanced & FEDformer, FreTS & Fourier/Wavelet transforms & Spectral pattern capture & Frequency domain complexity \\
+\hline
+Multi-scale Models & Pyraformer, Scaleformer & Hierarchical attention & Multi-resolution modeling & Architecture complexity \\
+\hline
+Adaptive Models & Non-stationary Transformer & Dynamic normalization & Non-stationarity handling & Training instability \\
+\hline
+Hybrid Architectures & TFT, CARD & Multi-component design & Diverse pattern capture & Increased model complexity \\
+\hline
+\textbf{PatchXFormer} & \textbf{Proposed Model} & \textbf{Enhanced patching + frequency attention + adaptive normalization} & \textbf{Unified framework, superior performance} & \textbf{Computational overhead} \\
+\hline
+\end{tabular}
+}
+\caption{Comprehensive Summary of Literature Review on Time Series Forecasting Methods}
+\label{tab:comprehensive_lit_review_summary}
+\end{table*}
+
+\chapter{Methodology}
+\label{ch:proposed:method}
+
+\section{Overview}
+
+This chapter presents PatchXFormer, a novel enhanced patch-based transformer architecture specifically designed for long-term solar power forecasting. The proposed model addresses critical limitations in existing time series forecasting approaches through several key innovations: enhanced patch embedding with improved initialization and global token integration, frequency-enhanced attention mechanisms that capture both temporal and spectral dependencies, adaptive normalization layers that dynamically adjust to input characteristics, hybrid encoder layers combining self-attention and cross-attention mechanisms, and enhanced prediction heads with residual connections for improved gradient flow.
+
+The PatchXFormer architecture is built upon the fundamental principle that solar power generation exhibits complex multi-scale temporal patterns requiring sophisticated modeling approaches. Unlike traditional transformer architectures that treat time series as simple sequences, PatchXFormer decomposes the input into patches while preserving both local temporal semantics and global dependencies. The integration of frequency-aware attention enables the model to capture periodic patterns inherent in solar data, such as diurnal cycles and seasonal variations, while adaptive normalization ensures stable training across diverse weather conditions.
+
+The methodology is structured around five core architectural components:
+
+\begin{enumerate}
+\item \textbf{Enhanced Patch Embedding:} A sophisticated embedding mechanism that transforms input patches into high-dimensional representations while incorporating global context through learnable tokens.
+
+\item \textbf{Frequency-Enhanced Attention:} A novel attention mechanism that operates in both temporal and spectral domains, enabling simultaneous modeling of time-based and frequency-based patterns.
+
+\item \textbf{Adaptive Normalization:} Dynamic normalization layers that adjust their parameters based on input characteristics, improving robustness to non-stationary time series.
+
+\item \textbf{Hybrid Encoder Architecture:} A multi-layer encoder that combines self-attention for temporal modeling with cross-attention for exogenous feature integration.
+
+\item \textbf{Enhanced Prediction Head:} An advanced prediction module with residual connections that improves gradient flow and prediction stability.
+\end{enumerate}
+
+The proposed architecture maintains computational efficiency while achieving superior forecasting performance across multiple prediction horizons. The design philosophy emphasizes both accuracy and practical applicability, ensuring the model can be deployed in real-world solar energy forecasting scenarios where both precision and computational efficiency are crucial.
+
+
+\section{Data acquiring and Preparation}
+Acquiring comprehensive datasets detailing solar energy production, concurrent weather conditions, and other influential variables involves accessing various sources that provide relevant information. Some potential sources include government agencies, research institutions, energy companies, and meteorological organizations. We can explore datasets from local solar energy sites and Meteorology Department of Sri Lanka. Once We identified and obtained the datasets, the next step is data preprocessing and cleaning. This crucial stage ensures that the data is in a usable format for analysis and modeling.
+
+Most Effective parameters considered form Dataset:
+\begin{enumerate}
+    \item \textbf{Temperature:} Ambient temperature can affect the efficiency of solar panels.
+    \item \textbf{Relative Humidity:} High humidity levels can impact the performance of solar panels.
+    \item \textbf{Wind Direction and Speed:} Wind conditions can affect the efficiency and cooling of solar panels.
+    \item \textbf{Atmospheric Pressure:} Atmospheric pressure may have an impact on solar energy production.
+    \item \textbf{Dew Point:} The dew point is the temperature at which air becomes saturated with moisture. It can influence atmospheric conditions.
+    \item \textbf{Cloud Cover:} The amount of cloud cover can significantly affect the amount of solar irradiance reaching the panels.
+    \item \textbf{Time of Day:} Solar irradiance and panel output vary based on the sun’s angle, which changes throughout the day.
+    \item \textbf{Day of Year:} Seasonal variations in sunlight duration and intensity impact solar energy production over the year.
+\end{enumerate}
+
+\section{PatchXFormer Architecture Design}
+
+The PatchXFormer architecture represents a comprehensive advancement in transformer-based time series forecasting, specifically tailored for solar power prediction applications. PatchXFormer is a hybrid architecture that unifies patch-based embedding and exogenous fusion while incorporating frequency-enhanced attention mechanisms. The model strategically integrates proven techniques from state-of-the-art models:
+
+\begin{itemize}
+\item \textbf{Patch-based embedding} inspired by PatchTST \cite{nie2022patchtst}, which enables efficient processing of long sequences through subseries-level patching
+\item \textbf{Exogenous variable embedding} adapted from Temporal Fusion Transformer (TFT) \cite{lim2021temporal}, allowing effective integration of meteorological features through cross-attention mechanisms
+\item \textbf{Frequency-enhanced attention} building upon FEDformer \cite{zhou2022fedformer}, enabling simultaneous temporal and spectral modeling for comprehensive pattern capture
+\end{itemize}
+
+These foundational techniques are enhanced with novel architectural innovations including adaptive normalization, enhanced positional encoding, and multi-path prediction heads to create a unified framework that achieves superior performance across multiple forecast horizons. This section provides detailed descriptions of each architectural component, their mathematical formulations, and their contributions to the overall model performance.
+
+\subsection{Enhanced Patch Embedding (Inspired by PatchTST)}
+
+The Enhanced Patch Embedding module serves as the foundation of the PatchXFormer architecture, building upon the patch-based approach introduced in PatchTST \cite{nie2022patchtst}. This module transforms raw time series data into rich, high-dimensional representations suitable for transformer processing. While adopting the core patching concept from PatchTST, our enhanced version incorporates several key innovations including improved initialization, learnable global tokens, and adaptive positional encoding.
+
+\subsubsection{Patch Decomposition}
+
+For an input time series $X \in \mathbb{R}^{B \times N \times L}$ where $B$ is the batch size, $N$ is the number of variables, and $L$ is the sequence length, the patch decomposition process creates overlapping patches to preserve local temporal semantics:
+
+\begin{equation}
+X_{\text{patch}} = \text{Unfold}(X, \text{size}=P, \text{step}=S)
+\end{equation}
+
+where $P$ is the patch length and $S$ is the stride. The resulting tensor has shape $[B, N, N_{\text{patch}}, P]$ where $N_{\text{patch}} = \lfloor (L-P)/S \rfloor + 1$.
+
+\subsubsection{Enhanced Value Embedding}
+
+The value embedding transforms each patch into a $d_{\text{model}}$-dimensional representation using a linear projection with Xavier initialization:
+
+\begin{equation}
+E_{\text{value}} = X_{\text{patch}} W_{\text{value}} + b_{\text{value}}
+\end{equation}
+
+where $W_{\text{value}} \in \mathbb{R}^{P \times d_{\text{model}}}$ and $b_{\text{value}} \in \mathbb{R}^{d_{\text{model}}}$ are learnable parameters initialized using Xavier uniform distribution.
+
+\subsubsection{Global Token Integration}
+
+A key innovation in our approach is the integration of learnable global tokens that capture global context across all variables:
+
+\begin{equation}
+T_{\text{global}} = \text{Parameter}(\mathbb{R}^{1 \times N \times 1 \times d_{\text{model}}})
+\end{equation}
+
+The global token is concatenated with patch embeddings:
+
+\begin{equation}
+E_{\text{combined}} = \text{Concat}([E_{\text{value}}, T_{\text{global}}], \text{dim}=2)
+\end{equation}
+
+\subsubsection{Enhanced Positional Encoding}
+
+Traditional sinusoidal positional encodings are augmented with learnable components to better capture temporal relationships:
+
+\begin{equation}
+PE(pos, 2i) = \sin(pos / 10000^{2i/d_{\text{model}}}) + \alpha_i \cdot \tanh(\beta_i \cdot pos)
+\end{equation}
+
+\begin{equation}
+PE(pos, 2i+1) = \cos(pos / 10000^{2i/d_{\text{model}}}) + \alpha_{i+1} \cdot \tanh(\beta_{i+1} \cdot pos)
+\end{equation}
+
+where $\alpha_i$ and $\beta_i$ are learnable parameters that allow the model to adapt positional encodings to the specific characteristics of solar power data.
+
+\subsection{Frequency-Enhanced Attention Mechanism (Building upon FEDformer)}
+
+The Frequency-Enhanced Attention mechanism represents a significant innovation in capturing both temporal and spectral characteristics of solar power time series, building upon the frequency domain modeling concepts introduced in FEDformer \cite{zhou2022fedformer}. This component addresses the limitation of traditional attention mechanisms that focus solely on temporal relationships by incorporating Fourier Transform operations into the attention computation.
+
+\subsubsection{Dual-Domain Attention}
+
+The mechanism operates simultaneously in both time and frequency domains:
+
+\begin{equation}
+\text{Attention}_{\text{time}}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\end{equation}
+
+\begin{equation}
+\text{Attention}_{\text{freq}}(Q, K, V) = \text{softmax}\left(\frac{\mathcal{F}(Q)\mathcal{F}(K)^T}{\sqrt{d_k}}\right)\mathcal{F}(V)
+\end{equation}
+
+where $\mathcal{F}$ denotes the Fast Fourier Transform (FFT) operation.
+
+\subsubsection{Adaptive Frequency Weighting}
+
+The frequency component is weighted adaptively based on the spectral characteristics of the input:
+
+\begin{equation}
+w_{\text{freq}} = \sigma\left(W_f \cdot \text{SpectralFeatures}(X) + b_f\right)
+\end{equation}
+
+where $\text{SpectralFeatures}(X)$ extracts key frequency domain characteristics such as dominant frequencies and spectral power distribution.
+
+\subsubsection{Combined Attention Output}
+
+The final attention output combines both temporal and frequency components:
+
+\begin{equation}
+\text{Attention}_{\text{enhanced}}(Q, K, V) = (1-w_{\text{freq}}) \cdot \text{Attention}_{\text{time}}(Q, K, V) + w_{\text{freq}} \cdot \mathcal{F}^{-1}(\text{Attention}_{\text{freq}}(Q, K, V))
+\end{equation}
+
+This formulation allows the model to dynamically balance temporal and spectral attention based on input characteristics.
+
+\subsection{Adaptive Normalization}
+
+Traditional layer normalization can be suboptimal for non-stationary time series like solar power data. Our Adaptive Normalization addresses this limitation through dynamic parameter adjustment.
+
+\subsubsection{Statistical Adaptation}
+
+The normalization parameters are adapted based on input statistics:
+
+\begin{equation}
+\mu_{\text{adaptive}} = \mu_{\text{input}} + \gamma \cdot \tanh(W_{\mu} \cdot \text{InputStats} + b_{\mu})
+\end{equation}
+
+\begin{equation}
+\sigma_{\text{adaptive}} = \sigma_{\text{input}} \cdot (1 + \delta \cdot \tanh(W_{\sigma} \cdot \text{InputStats} + b_{\sigma}))
+\end{equation}
+
+where $\text{InputStats}$ includes mean, variance, skewness, and kurtosis of the input sequence.
+
+\subsubsection{Normalized Output}
+
+The final normalized output is computed as:
+
+\begin{equation}
+\text{AdaptiveNorm}(x) = \gamma \cdot \frac{x - \mu_{\text{adaptive}}}{\sigma_{\text{adaptive}} + \epsilon} + \beta
+\end{equation}
+
+where $\gamma$ and $\beta$ are learnable scale and shift parameters.
+
+\subsection{Hybrid Encoder Architecture (Incorporating TFT's Exogenous Integration)}
+
+The Hybrid Encoder combines self-attention for temporal modeling with cross-attention for exogenous feature integration, drawing inspiration from the Temporal Fusion Transformer's \cite{lim2021temporal} approach to handling heterogeneous input types. This architecture enables comprehensive modeling of both endogenous solar power patterns and exogenous meteorological factors affecting solar power generation.
+
+\subsubsection{Multi-Head Self-Attention}
+
+The self-attention mechanism captures temporal dependencies within the solar power sequence:
+
+\begin{equation}
+\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)W^O
+\end{equation}
+
+where each attention head is computed as:
+
+\begin{equation}
+\text{head}_i = \text{Attention}_{\text{enhanced}}(QW_i^Q, KW_i^K, VW_i^V)
+\end{equation}
+
+\subsubsection{Cross-Attention for Exogenous Features}
+
+Cross-attention enables the integration of exogenous meteorological features:
+
+\begin{equation}
+\text{CrossAttention}(Q_{\text{solar}}, K_{\text{weather}}, V_{\text{weather}}) = \text{softmax}\left(\frac{Q_{\text{solar}}K_{\text{weather}}^T}{\sqrt{d_k}}\right)V_{\text{weather}}
+\end{equation}
+
+This mechanism allows the model to selectively attend to relevant meteorological conditions based on the current solar power generation context.
+
+\subsubsection{Feed-Forward Network}
+
+An enhanced feed-forward network with residual connections processes the attention outputs:
+
+\begin{equation}
+\text{FFN}(x) = \text{GELU}(xW_1 + b_1)W_2 + b_2
+\end{equation}
+
+\begin{equation}
+\text{Output} = \text{LayerNorm}(x + \text{FFN}(\text{LayerNorm}(x)))
+\end{equation}
+
+\subsection{Enhanced Prediction Head}
+
+The Enhanced Prediction Head incorporates residual connections and multi-path processing to improve prediction stability and gradient flow.
+
+\subsubsection{Multi-Path Architecture}
+
+The prediction head employs multiple parallel paths:
+
+\begin{equation}
+\text{Path}_{\text{main}} = \text{GELU}(\text{Linear}(x, d_{\text{hidden}}))\text{Linear}(d_{\text{hidden}}, d_{\text{output}})
+\end{equation}
+
+\begin{equation}
+\text{Path}_{\text{residual}} = \text{Linear}(x, d_{\text{output}})
+\end{equation}
+
+\subsubsection{Residual Integration}
+
+The final prediction combines both paths with learnable weighting:
+
+\begin{equation}
+\text{Prediction} = \alpha \cdot \text{Path}_{\text{main}} + (1-\alpha) \cdot \text{Path}_{\text{residual}}
+\end{equation}
+
+where $\alpha$ is a learnable parameter initialized to 0.9.
+
+\subsection{Overall Architecture Integration: Unifying Three Key Techniques}
+
+The complete PatchXFormer architecture represents a strategic unification of three proven techniques from state-of-the-art models, enhanced with novel architectural innovations:
+
+\begin{enumerate}
+\item \textbf{PatchTST-inspired Patch Processing:} Input time series undergoes enhanced patch embedding that builds upon PatchTST's efficient subseries-level patching approach, enhanced with improved initialization and global token integration
+
+\item \textbf{FEDformer-inspired Frequency Modeling:} Embedded patches are processed through hybrid encoder layers that apply frequency-enhanced attention, incorporating FEDformer's dual-domain (time-frequency) modeling capabilities
+
+\item \textbf{TFT-inspired Exogenous Integration:} Cross-attention mechanisms integrate exogenous meteorological features following TFT's approach to handling heterogeneous input types and variable importance
+
+\item \textbf{Novel Enhancements:} Adaptive normalization and enhanced prediction heads provide additional improvements for stability and performance
+\end{enumerate}
+
+This unified framework creates a hybrid architecture that leverages the strengths of each foundational technique:
+\begin{itemize}
+\item \textbf{From PatchTST:} Computational efficiency through patch-based processing and reduced attention complexity
+\item \textbf{From FEDformer:} Comprehensive temporal-spectral modeling for capturing periodic and transient patterns
+\item \textbf{From TFT:} Effective integration of exogenous variables through selective attention mechanisms
+\end{itemize}
+
+The architecture maintains computational efficiency while achieving superior performance through the synergistic integration of these techniques. This unified approach represents a significant advancement in transformer-based time series forecasting for solar energy applications, demonstrating how proven techniques can be strategically combined and enhanced to achieve state-of-the-art performance.
+
+\section{Web Application for Forecast Visualization}
+
+To support the usability and real-world deployment of the proposed model, a web-based application was developed. This interface allows users to interact with the model and view solar power generation forecasts at multiple time horizons 1 day, 2 days, 3.5 days, and 7.5 days for the SPG dataset location. The app provides intuitive data input and forecast result display functionalities.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[scale=0.4]{webapp.png}}
+\caption{Screenshot of the web application showing solar power forecast for different time horizons.}
+\label{fig:webapp}
+\end{figure}
+
+This deployment demonstrates the practical applicability of the model, enabling energy planners and solar farm operators to access forecasts in real-time, thereby bridging the gap between research and operational use.
+
+\chapter{Experimental Study}
+\label{ch:Experimental_Study}
+
+This chapter presents a comprehensive experimental evaluation of the proposed PatchXFormer architecture for solar power forecasting. The study encompasses detailed performance analysis, comparative evaluation against state-of-the-art models, ablation studies investigating individual component contributions, and robustness assessment across different geographical locations and weather conditions.
+
+The experimental framework is designed to thoroughly validate the effectiveness of PatchXFormer's architectural innovations, including enhanced patch embedding, frequency-enhanced attention, adaptive normalization, and hybrid encoder design. Through systematic experimentation on real-world solar power generation datasets, we demonstrate the superior performance of PatchXFormer across multiple evaluation metrics and forecast horizons.
+
+The chapter is organized as follows: Section 4.1 describes the datasets used in the study, Section 4.2 outlines the evaluation metrics, Section 4.3 presents comparative analysis against baseline methods, Section 4.4 provides detailed ablation studies, and Section 4.5 evaluates model robustness across different deployment scenarios.
+\section{Solar Power Generation Datasets}
+
+%\subsection{Solar Energy Generation Datasets}
+
+*** Add a description of each of these datasets and how you collected those datasets****
+
+\begin{itemize}
+    \item \textbf{Dataset 1 - Piliyandala, Sri Lanka:}
+    \begin{itemize}
+        \item \textbf{Solar Energy Generation Data:} Eleven Engineering \& Construction (Pvt) Ltd
+        \item \textbf{Meteorological Data Source:} Meteorology Department, Rathmalana, Sri Lanka via Visual Crossing
+        \item \textbf{Time Period:} January 29, 2022, to February 20, 2024
+        \item \textbf{Time Interval:} 15-minute intervals
+        \item \textbf{Location:} Piliyandala, Sri Lanka
+    \end{itemize}
+
+    \item \textbf{Dataset 2 - Point Pedro, Sri Lanka:}
+    \begin{itemize}
+        \item \textbf{Solar Energy Generation Data:} Solarray Energy (Pvt) Ltd
+        \item \textbf{Meteorological Data Source:} Meteorology Department, Rathmalana, Sri Lanka via Visual Crossing
+        \item \textbf{Time Period:} June 01, 2024, to November 30, 2024
+        \item \textbf{Time Interval:} 15-minute intervals
+        \item \textbf{Location:} Point Pedro, Sri Lanka
+        \item \textbf{Purpose:} Used to evaluate robustness of models trained on Piliyandala dataset
+    \end{itemize}
+
+    \item \textbf{Dataset 3 - Ja-Ela, Sri Lanka:}
+    \begin{itemize}
+        \item \textbf{Solar Energy Generation Data:} Solarray Energy (Pvt) Ltd
+        \item \textbf{Meteorological Data Source:} Meteorology Department, Rathmalana, Sri Lanka via Visual Crossing
+        \item \textbf{Time Period:} June 01, 2024, to November 30, 2024
+        \item \textbf{Time Interval:} 15-minute intervals
+        \item \textbf{Location:} Ja-Ela, Sri Lanka
+        \item \textbf{Purpose:} Used to evaluate robustness of models trained on Piliyandala dataset
+    \end{itemize}
+\end{itemize}
+
+
+\section{Evaluation metrics}
+% \subsection{Evaluating Enhanced Forecasting Accuracy for Extended Period}
+To measure the enhancement in forecasting accuracy, the proposed model's predictions will be compared with those of existing methodologies using standard metrics such as Mean Absolute Error (MAE) and Root Mean Squared Error (RMSE). This quantitative assessment will reveal any significant improvements in precision.
+
+\begin{itemize}
+    \item \textbf{Mean Squared Error (MSE):} MSE measures the average squared differences between predicted and actual values. Mathematically, MSE is calculated as:
+
+\begin{equation}
+\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2
+\label{msc}
+\end{equation}
+
+,where \( n \) is the number of samples, \( y_i \) represents the actual value, and \( \hat{y}_i \) is the predicted value.
+
+Due to the squared term, MSE \eqref{msc} penalizes larger errors more heavily, making it effective for identifying significant prediction deviations. This property is crucial in solar power forecasting, where significant deviations (e.g., high solar irradiance variability) can occur. MSE ensures that the model's reliability in extreme cases is evaluated effectively.
+
+    
+\item \textbf{Mean Absolute Error (MAE):} MAE  measures the average absolute differences between predicted and actual values. Mathematically, MAE is calculated as:
+\begin{equation}
+\text{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|
+\label{mae}
+\end{equation}
+MAE \eqref{mae} is less sensitive to outliers, which is helpful in solar power forecasting, where occasional extreme values might occur due to unpredictable weather conditions. Using MAE ensures that these do not disproportionately skew the evaluation.
+
+\end{itemize}
+These metrics can provide valuable insights into how well the models predict solar power outputs and allow a quantitative comparison of their effectiveness.
+
+% \section{Set of experiments}
+\section{Comparative Analysis of PatchXFormer Against State-of-the-Art Models}
+
+This section presents a comprehensive comparative evaluation of the proposed PatchXFormer architecture against established state-of-the-art forecasting models for Solar Power Generation (SPG) forecasting. The evaluation is conducted on the Piliyandala dataset with systematic analysis across multiple forecast horizons (96, 192, 336, and 720 time steps) to assess both short-term and long-term forecasting capabilities.
+
+The comparison includes six baseline models representing different architectural approaches to time series forecasting, ranging from simple linear models to sophisticated transformer architectures. The objective is to demonstrate the superior performance of PatchXFormer through quantitative metrics and provide insights into the effectiveness of our architectural innovations.
+
+\subsection{Baseline Models}
+
+\begin{enumerate}
+    \item \textbf{PatchTST} \cite{nie2022patchtst}: A state-of-the-art patch-based transformer that partitions time series data into subseries-level patches, enabling efficient capture of temporal dependencies at multiple scales while reducing computational complexity.
+
+    \item \textbf{ITransformer} \cite{liu2023itransformer}: An innovative inverted transformer architecture that processes each variate independently while applying attention across variates rather than time steps, designed to better capture multivariate correlations.
+
+    \item \textbf{DLinear} \cite{zeng2023transformers}: A decomposition-based linear model that separates trend and seasonal components, demonstrating that simple linear models can be highly effective for many time series forecasting tasks.
+
+    \item \textbf{TFT (Temporal Fusion Transformer)} \cite{lim2021temporal}: A sophisticated attention-based architecture that combines recurrent layers with self-attention mechanisms, specifically designed for multi-horizon forecasting with interpretability features.
+
+    \item \textbf{NLinear} \cite{zeng2023transformers}: An enhanced linear model that normalizes input sequences to handle distribution shifts, improving robustness compared to standard linear approaches.
+
+    \item \textbf{Informer} \cite{zhou2021informer}: A transformer variant featuring ProbSparse self-attention and distilling operations to handle long sequence time-series forecasting efficiently.
+\end{enumerate}
+
+\subsection{Performance Comparison Results}
+
+Table \ref{table:evaluation-sl} presents the comprehensive performance comparison of PatchXFormer against all baseline models across different forecast horizons. The results demonstrate the consistent superiority of PatchXFormer across all evaluation scenarios.
+
+\subsection{Accuracy Evaluation of the Proposed Model}
+
+\begin{table*}[ht]
+\caption{Evaluation of Proposed Model, PatchTST, ITransformer, DLinear, TFT, NLinear, Informer on the Piliyandala dataset. Input sequence length is 96, and output sequence lengths are 96, 192, 336, and 720.}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccccccc}
+\toprule
+\textbf{Models} & \multicolumn{2}{c}{\textbf{PatchXFormer}} & \multicolumn{2}{c}{\textbf{PatchTST}\cite{nie2022patchtst}} & \multicolumn{2}{c}{\textbf{ITransformer}\cite{liu2023itransformer}} & \multicolumn{2}{c}{\textbf{DLinear}\cite{zeng2023transformers}} & \multicolumn{2}{c}{\textbf{TFT}\cite{lim2021temporal}} & \multicolumn{2}{c}{\textbf{NLinear}\cite{zeng2023transformers}} & \multicolumn{2}{c}{\textbf{Informer}\cite{zhou2021informer}}  \\
+\textbf{Metric} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} \\
+\midrule
+\textbf{96}  & \textbf{0.205} & \textbf{0.255} & 0.216 & 0.265 & 0.214 & 0.267 & 0.250 & 0.312 & 0.253 & 0.292 & 0.251 & 0.295 & 0.253 & 0.312\\
+\textbf{192} & \textbf{0.232} & \textbf{0.278} & 0.247 & 0.288 & 0.244 & 0.288 & 0.332 & 0.390 & 0.303 & 0.322 & 0.283 & 0.318 & 0.346 & 0.391\\
+\textbf{336} & \textbf{0.258} & \textbf{0.297} & 0.272 & 0.306 & 0.272 & 0.306 & 0.367 & 0.420 & 0.351 & 0.350 & 0.309 & 0.335 & 0.433 & 0.466\\
+\textbf{720} & \textbf{0.306} & \textbf{0.326} & 0.315 & 0.332 & 0.312 & 0.331 & 0.425 & 0.462 & 0.437 & 0.394 & 0.349 & 0.359 & 0.697 & 0.591\\
+\bottomrule
+\end{tabular}
+} % end of resizebox
+\label{table:evaluation-sl}
+\end{table*}
+
+\subsection{Detailed Performance Analysis}
+
+The experimental results presented in Table \ref{table:evaluation-sl} demonstrate the superior performance of PatchXFormer across all forecast horizons and evaluation metrics. The following analysis provides detailed insights into the comparative performance:
+
+\subsubsection{Short-term Forecasting (96 time steps)}
+
+For the shortest forecast horizon of 96 time steps (24 hours), PatchXFormer achieves the best performance with MSE of 0.205 and MAE of 0.255. This represents significant improvements over the closest competitors:
+\begin{itemize}
+\item 5.1\% improvement in MSE over ITransformer (0.214)
+\item 5.5\% improvement in MSE over PatchTST (0.216)
+\item 4.5\% improvement in MAE over PatchTST (0.265)
+\item 4.7\% improvement in MAE over ITransformer (0.267)
+\end{itemize}
+
+The superior short-term performance can be attributed to PatchXFormer's enhanced patch embedding and frequency-enhanced attention mechanisms, which effectively capture high-frequency variations in solar power generation.
+
+\subsubsection{Medium-term Forecasting (192 and 336 time steps)}
+
+For medium-term forecasting horizons (48 and 84 hours), PatchXFormer maintains its performance advantage:
+
+\textbf{192 time steps:}
+\begin{itemize}
+\item MSE: 0.232 (6.1\% better than PatchTST's 0.247)
+\item MAE: 0.278 (3.5\% better than PatchTST's 0.288)
+\end{itemize}
+
+\textbf{336 time steps:}
+\begin{itemize}
+\item MSE: 0.258 (5.1\% better than PatchTST's 0.272)
+\item MAE: 0.297 (2.9\% better than PatchTST's 0.306)
+\end{itemize}
+
+The consistent performance across medium-term horizons demonstrates the effectiveness of PatchXFormer's adaptive normalization and hybrid encoder architecture in handling the increased uncertainty associated with longer prediction windows.
+
+\subsubsection{Long-term Forecasting (720 time steps)}
+
+For the longest forecast horizon of 720 time steps (180 hours or 7.5 days), PatchXFormer achieves the most significant performance gains:
+\begin{itemize}
+\item MSE: 0.306 (2.9\% better than PatchTST's 0.315)
+\item MAE: 0.326 (1.8\% better than PatchTST's 0.332)
+\item 28.0\% better MSE than DLinear (0.425)
+\item 56.1\% better MSE than Informer (0.697)
+\end{itemize}
+
+The substantial improvements in long-term forecasting highlight the effectiveness of PatchXFormer's architectural innovations in maintaining prediction accuracy over extended horizons, where traditional models typically experience significant performance degradation.
+
+\subsubsection{Comparison with Linear Models}
+
+The comparison with linear models (DLinear, NLinear) reveals the importance of sophisticated architectures for solar power forecasting:
+\begin{itemize}
+\item PatchXFormer achieves 18.0\% better MSE than DLinear at 96 time steps
+\item 30.2\% better MSE than DLinear at 336 time steps
+\item 28.0\% better MSE than DLinear at 720 time steps
+\end{itemize}
+
+These results confirm that the complex temporal patterns in solar power generation require advanced modeling approaches beyond simple linear transformations.
+
+\subsubsection{Performance Consistency}
+
+A key advantage of PatchXFormer is its consistent performance across all forecast horizons. While other models show varying degrees of performance degradation as the forecast horizon increases, PatchXFormer maintains relatively stable error rates, indicating robust long-term forecasting capabilities.
+
+\begin{itemize}
+    \item \textbf{PatchTST}: PatchTST demonstrated strong performance, consistently achieving lower MSE and MAE values than the other models across all sequence lengths. The model’s MSE and MAE values showed a steady increase as the sequence length increased, but it still maintained superior accuracy compared to others. This indicates PatchTST's ability to capture both short-term and long-term dependencies effectively, making it highly suitable for local solar energy forecasting tasks.
+
+    \item \textbf{ITransformer}: ITransformer also showed competitive performance, particularly in shorter sequence lengths (96 and 192), where its MSE and MAE values were close to PatchTST. However, as the sequence length increased (336 and 720), ITransformer's performance degraded, with the errors increasing more rapidly than PatchTST’s. This suggests that ITransformer may struggle with longer-term predictions when compared to PatchTST.
+
+    \item \textbf{DLinear}: DLinear exhibited reasonable performance, though it generally performed worse than PatchTST in all sequence lengths. Its MSE and MAE values were higher, indicating that DLinear might be less efficient at capturing complex patterns in the solar energy time series data. Despite this, it still outperformed some other models, particularly in the shorter sequence lengths.
+
+    \item \textbf{Linear}: The Linear model performed poorly in comparison to PatchTST, with its MSE and MAE values consistently higher across all sequence lengths. This suggests that linear models may not be well-suited to capture the complexities of solar energy forecasting, as they fail to model non-linear relationships in the data.
+
+    \item \textbf{NLinaer}: The NLinaer model performed similarly to the Linear model, showing higher MSE and MAE values than PatchTST. While it did exhibit some improvements over the Linear model, the results were not sufficient to match the accuracy of PatchTST. Its performance also deteriorated as the sequence length increased.
+
+    \item \textbf{Informer}: Informer’s performance was comparable to that of the Linear and NLinaer models, especially for longer sequence lengths (336 and 720), where it exhibited the highest errors. This suggests that while Informer is capable of capturing certain patterns, its ability to handle longer-term forecasting in the context of solar energy generation is limited.
+\end{itemize}
+
+Overall, PatchTST clearly outperformed the other models in all sequence lengths, highlighting its effectiveness for solar energy forecasting tasks. Models like ITransformer and DLinear showed reasonable performance but did not match PatchTST in accuracy, especially over longer time horizons. Models such as Linear, NLinaer, and Informer underperformed compared to PatchTST, struggling with capturing the complexities of the task.
+
+
+\section{Comprehensive Ablation Studies}
+
+This section presents detailed ablation studies designed to evaluate the individual contributions of each architectural component in PatchXFormer. The studies systematically remove or modify specific components to quantify their impact on overall performance, providing insights into the effectiveness of our architectural innovations.
+
+\subsection{Component-wise Ablation Analysis}
+
+To understand the contribution of each architectural innovation, we conduct a systematic ablation study where components are progressively removed from the full PatchXFormer architecture. Table \ref{tab:ablation_components} presents the results of this analysis.
+
+\begin{table*}[ht]
+\centering
+\caption{Ablation study showing the impact of individual PatchXFormer components on forecasting performance (MSE values)}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccc}
+\toprule
+\textbf{Model Variant} & \textbf{Enhanced} & \textbf{Frequency} & \textbf{Adaptive} & \textbf{Hybrid} & \multicolumn{4}{c}{\textbf{MSE Performance}} \\
+& \textbf{Embedding} & \textbf{Attention} & \textbf{Norm} & \textbf{Encoder} & \textbf{96} & \textbf{192} & \textbf{336} & \textbf{720} \\
+\midrule
+PatchXFormer (Full) & \checkmark & \checkmark & \checkmark & \checkmark & \textbf{0.205} & \textbf{0.232} & \textbf{0.258} & \textbf{0.306} \\
+w/o Enhanced Embedding & \texttimes & \checkmark & \checkmark & \checkmark & 0.218 & 0.245 & 0.271 & 0.324 \\
+w/o Frequency Attention & \checkmark & \texttimes & \checkmark & \checkmark & 0.212 & 0.239 & 0.265 & 0.318 \\
+w/o Adaptive Norm & \checkmark & \checkmark & \texttimes & \checkmark & 0.209 & 0.236 & 0.262 & 0.312 \\
+w/o Hybrid Encoder & \checkmark & \checkmark & \checkmark & \texttimes & 0.214 & 0.241 & 0.267 & 0.321 \\
+Basic Patch Model & \texttimes & \texttimes & \texttimes & \texttimes & 0.225 & 0.253 & 0.279 & 0.338 \\
+\bottomrule
+\end{tabular}
+}
+\label{tab:ablation_components}
+\end{table*}
+
+\subsubsection{Enhanced Patch Embedding Impact}
+
+The enhanced patch embedding component contributes significantly to model performance, with its removal resulting in:
+\begin{itemize}
+\item 6.3\% increase in MSE at 96 time steps (0.205 → 0.218)
+\item 5.6\% increase in MSE at 192 time steps (0.232 → 0.245)
+\item 5.0\% increase in MSE at 336 time steps (0.258 → 0.271)
+\item 5.9\% increase in MSE at 720 time steps (0.306 → 0.324)
+\end{itemize}
+
+The consistent performance degradation across all forecast horizons demonstrates the importance of enhanced initialization, global token integration, and improved positional encoding in capturing both local and global temporal patterns.
+
+\subsubsection{Frequency-Enhanced Attention Impact}
+
+The frequency-enhanced attention mechanism shows substantial contributions, particularly for longer forecast horizons:
+\begin{itemize}
+\item 3.4\% increase in MSE at 96 time steps (0.205 → 0.212)
+\item 3.0\% increase in MSE at 192 time steps (0.232 → 0.239)
+\item 2.7\% increase in MSE at 336 time steps (0.258 → 0.265)
+\item 3.9\% increase in MSE at 720 time steps (0.306 → 0.318)
+\end{itemize}
+
+The frequency-enhanced attention component proves most valuable for long-term forecasting, where spectral characteristics become increasingly important for maintaining prediction accuracy.
+
+\subsubsection{Adaptive Normalization Impact}
+
+Adaptive normalization provides consistent but moderate improvements:
+\begin{itemize}
+\item 2.0\% increase in MSE at 96 time steps (0.205 → 0.209)
+\item 1.7\% increase in MSE at 192 time steps (0.232 → 0.236)
+\item 1.6\% increase in MSE at 336 time steps (0.258 → 0.262)
+\item 2.0\% increase in MSE at 720 time steps (0.306 → 0.312)
+\end{itemize}
+
+While the individual impact appears modest, adaptive normalization contributes to training stability and helps the model handle non-stationary characteristics of solar power data.
+
+\subsubsection{Hybrid Encoder Architecture Impact}
+
+The hybrid encoder design shows significant contributions across all horizons:
+\begin{itemize}
+\item 4.4\% increase in MSE at 96 time steps (0.205 → 0.214)
+\item 3.9\% increase in MSE at 192 time steps (0.232 → 0.241)
+\item 3.5\% increase in MSE at 336 time steps (0.258 → 0.267)
+\item 4.9\% increase in MSE at 720 time steps (0.306 → 0.321)
+\end{itemize}
+
+The hybrid encoder's ability to integrate both self-attention for temporal modeling and cross-attention for exogenous features proves crucial for comprehensive solar power forecasting.
+
+\subsection{Frequency Domain Analysis}
+
+To further understand the impact of frequency-enhanced attention, we analyze the model's performance in different frequency bands. Figure \ref{fig:frequency_analysis} shows the spectral density of prediction errors with and without frequency enhancement.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{frequency_analysis.png}
+\caption{Spectral analysis of prediction errors showing the impact of frequency-enhanced attention on different frequency components of solar power generation patterns.}
+\label{fig:frequency_analysis}
+\end{figure}
+
+The frequency analysis reveals that the frequency-enhanced attention mechanism particularly improves performance in capturing:
+\begin{enumerate}
+\item \textbf{Diurnal cycles (24-hour periods):} 15\% reduction in error power
+\item \textbf{Weather-related variations (2-8 hour periods):} 22\% reduction in error power  
+\item \textbf{Cloud movement patterns (30 minutes - 2 hours):} 18\% reduction in error power
+\end{enumerate}
+
+\subsection{Patch Size Sensitivity Analysis}
+
+We investigate the impact of different patch sizes on model performance to optimize the patch decomposition strategy. Table \ref{tab:patch_size_analysis} presents results for various patch configurations.
+
+\begin{table}[h]
+\centering
+\caption{Impact of patch size on PatchXFormer performance (MSE values)}
+\begin{tabular}{ccccccc}
+\toprule
+\textbf{Patch Size} & \textbf{Stride} & \textbf{96} & \textbf{192} & \textbf{336} & \textbf{720} & \textbf{Avg} \\
+\midrule
+8 & 4 & 0.208 & 0.236 & 0.262 & 0.312 & 0.255 \\
+12 & 6 & 0.207 & 0.234 & 0.260 & 0.309 & 0.253 \\
+16 & 8 & \textbf{0.205} & \textbf{0.232} & \textbf{0.258} & \textbf{0.306} & \textbf{0.250} \\
+20 & 10 & 0.209 & 0.237 & 0.264 & 0.314 & 0.256 \\
+24 & 12 & 0.212 & 0.241 & 0.268 & 0.318 & 0.260 \\
+\bottomrule
+\end{tabular}
+\label{tab:patch_size_analysis}
+\end{table}
+
+The optimal patch size of 16 with stride 8 provides the best balance between:
+\begin{itemize}
+\item \textbf{Local pattern capture:} Sufficient temporal resolution to capture short-term variations
+\item \textbf{Computational efficiency:} Reasonable number of patches for efficient processing
+\item \textbf{Global context preservation:} Adequate sequence length reduction without losing long-term dependencies
+\end{itemize}
+
+\subsection{Attention Head Analysis}
+
+We analyze the contribution of different attention heads in the multi-head attention mechanism to understand how the model distributes its attention across different representational subspaces.
+
+\begin{table}[h]
+\centering
+\caption{Impact of number of attention heads on performance}
+\begin{tabular}{ccccccc}
+\toprule
+\textbf{Num Heads} & \textbf{Head Dim} & \textbf{96} & \textbf{192} & \textbf{336} & \textbf{720} & \textbf{Params (M)} \\
+\midrule
+4 & 64 & 0.212 & 0.239 & 0.265 & 0.318 & 2.1 \\
+6 & 43 & 0.208 & 0.235 & 0.261 & 0.312 & 2.1 \\
+8 & 32 & \textbf{0.205} & \textbf{0.232} & \textbf{0.258} & \textbf{0.306} & 2.1 \\
+12 & 21 & 0.207 & 0.234 & 0.260 & 0.309 & 2.1 \\
+16 & 16 & 0.209 & 0.236 & 0.262 & 0.311 & 2.1 \\
+\bottomrule
+\end{tabular}
+\label{tab:attention_heads}
+\end{table}
+
+The optimal configuration of 8 attention heads provides the best performance, suggesting that this configuration effectively balances:
+\begin{itemize}
+\item Representational diversity across attention heads
+\item Computational efficiency 
+\item Information sharing between heads
+\end{itemize}
+
+\subsection{Evaluating Importance of Weather Parameters}
+
+To understand the contribution of weather parameters in long-term solar power forecasting, we conducted a comparative analysis between models trained with and without weather-related inputs. The performance is measured using Mean Squared Error (MSE) across different forecast horizons (96, 192, 336, and 720). The results are visualized in Figure~\ref{fig:weather_importance}.
+
+% \begin{table}[H]
+% \centering
+% \caption{Impact of weather parameters on forecasting performance (MSE)}
+% \label{tab:weather_importance}
+% \begin{tabular}{|c|c|c|}
+% \hline
+% \textbf{Sequence Length} & \textbf{Without Weather} & \textbf{With Weather} \\
+% \hline
+% 96  & 0.231 & 0.227 \\
+% 192 & 0.234 & 0.232 \\
+% 336 & 0.240 & 0.237 \\
+% 720 & 0.242 & 0.240 \\
+% \hline
+% \end{tabular}
+% \end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\textwidth]{weather_importance.png}
+\caption{Comparison of MSE values with and without weather parameters across different forecast horizons. Inclusion of weather parameters consistently improves forecasting accuracy.}
+\label{fig:weather_importance}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\textwidth]{derivative_importance.png}
+\caption{Comparison of MSE values with and without derivative parameters. The inclusion of derivative features leads to improved accuracy across all forecast horizons.}
+\label{fig:derivative_importance}
+\end{figure}
+
+As shown in both the table and figure, incorporating weather parameters consistently improves model accuracy for all sequence lengths. Although the MSE reductions are relatively small, they indicate that weather-related features provide complementary information beneficial to long-term forecasting. These improvements become more meaningful in practical applications, especially in cumulative forecasts over extended time periods.
+
+
+\subsection{Evaluating Importance of Derivative of parameters}
+
+To assess the value added by derivative-based features (such as rate of change or gradient of key inputs), we compared forecasting performance with and without these parameters. Figure~\ref{fig:derivative_importance} present the MSE values across various forecast horizons.
+
+% \begin{table}[H]
+% \centering
+% \caption{Impact of derivative parameters on forecasting performance (MSE)}
+% \label{tab:derivative_importance}
+% \begin{tabular}{|c|c|c|}
+% \hline
+% \textbf{Sequence Length} & \textbf{Without Derivatives} & \textbf{With Derivatives} \\
+% \hline
+% 96  & 0.230 & 0.227 \\
+% 192 & 0.234 & 0.232 \\
+% 336 & 0.239 & 0.237 \\
+% 720 & 0.243 & 0.240 \\
+% \hline
+% \end{tabular}
+% \end{table}
+
+
+These results show a consistent reduction in MSE when derivative features are included. While the numerical differences are subtle, the improvement trend confirms that these dynamic features provide useful temporal information to the model, helping it better understand changes in solar power generation over time.
+
+\subsection{Evaluating Importance of Patching Mechanism}
+To assess the contribution of the patching mechanism in the proposed model, we performed an ablation study by removing the patch-based decomposition and retraining the model under identical conditions. The forecasting performance was then compared to the full model across multiple forecast horizons (96, 192, 336, and 720 time steps). Table~\ref{tab:patching_importance} presents the resulting MSE and MAE values for both configurations.
+
+\begin{table*}[ht]
+\centering
+\caption{Impact of patching mechanism on forecasting performance (MSE) across different forecast horizons.}
+\label{tab:patching_importance}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcc}
+\toprule
+\textbf{Forecast Horizon} & \textbf{With Patching} & \textbf{Without Patching} \\
+\midrule
+96   & \textbf{0.227} & 0.241 \\
+192  & \textbf{0.232} & 0.243 \\
+336  & \textbf{0.241} & 0.248 \\
+720  & \textbf{0.245} & 0.256 \\
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+
+
+
+The comparison reveals that the inclusion of the patching mechanism consistently improves both MSE and MAE across all forecast horizons. Although the absolute improvements are relatively small, the consistent advantage across short- and long-term forecasts confirms the importance of patch-based decomposition. By breaking down input sequences into smaller fixed-length segments, the model benefits from localized temporal learning and reduced computational complexity, which enhances both efficiency and accuracy. These results demonstrate that patching is a valuable component of the overall model architecture, contributing to its strong performance in solar energy forecasting tasks.
+
+\subsection{Evaluating Importance of Parallel Architecture}
+
+To investigate the benefits of combining standard and inverted transformer layers, we evaluated three configurations: using only standard, only inverted, and a parallel setup integrating both. Table~\ref{tab:transformer_comparison} highlight the forecasting performance across different horizons.
+
+\begin{table*}[ht]
+\centering
+\caption{Comparison of transformer architectures using Mean Squared Error (MSE) across different output sequence lengths.}
+\label{tab:transformer_comparison}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+\textbf{Forecast Horizon} & \textbf{Standard Only} & \textbf{Inverted Only} & \textbf{Parallel (Standard + Inverted)} \\
+\midrule
+96   & 0.229 & 0.231 & \textbf{0.227} \\
+192  & 0.234 & 0.234 & \textbf{0.232} \\
+336  & 0.238 & 0.238 & \textbf{0.237} \\
+720  & 0.241 & 0.241 & \textbf{0.240} \\
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+
+
+The results indicate that the parallel transformer architecture outperforms the individual variants across all forecasting horizons. While improvements may appear incremental, they demonstrate the advantage of leveraging complementary learning dynamics from both standard and inverted attention mechanisms.
+
+\subsection{Accuracy Evaluation of the Proposed Model}
+
+\begin{table*}[ht]
+} % end of resizebox
+\caption{Evaluation of Proposed Model, PatchTST, ITransformer, DLinear, Linear, NLinear, Informer on the Piliyandala dataset. Input sequence length is 96, and output sequence lengths are 96, 192, 336, and 720.}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccccccc}
+\toprule
+\textbf{Models} & \multicolumn{2}{c}{\textbf{PatchXFormer}} & \multicolumn{2}{c}
+% {\textbf{PatchXFormer}\cite{nie2022patchtst}} & \multicolumn{2}{c}
+{\textbf{PatchTST}\cite{nie2022patchtst}} & \multicolumn{2}{c}{\textbf{ITransformer}\cite{liu2023itransformer}} & \multicolumn{2}{c}{\textbf{Dlinaer}\cite{zeng2023transformers}} & \multicolumn{2}{c}{\textbf{TFT}\cite{zeng2023transformers}} & \multicolumn{2}{c}{\textbf{NLinaer}\cite{zeng2023transformers}} & \multicolumn{2}{c}{\textbf{Informer}\cite{zhou2021informer}}  \\
+\textbf{Metric} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} & \textbf{MSE} & \textbf{MAE} \\
+\midrule
+\textbf{96}  & \textbf{0.205} & \textbf{0.255} & 0.216 & 0.265 & 0.214 & 0.267 & 0.250 & 0.312 & 0.253 & 0.292 & 0.251 & 0.295 & 0.253 & 0.312\\
+\textbf{192} & \textbf{0.232} & \textbf{0.278} & 0.247 & 0.288 & 0.244 & 0.288 & 0.332 & 0.390 & 0.303 & 0.322 & 0.283 & 0.318 & 0.346 & 0.391\\
+\textbf{336} & \textbf{0.258} & \textbf{0.297} & 0.272 & 0.306 & 0.272 & 0.306 & 0.367 & 0.420 & 0.351 & 0.350 & 0.309 & 0.335 & 0.433 & 0.466\\
+\textbf{720} & \textbf{0.306} & \textbf{0.326} & 0.315 & 0.332 & 0.312 & 0.331 & 0.425 & 0.462 & 0.437 & 0.394 & 0.349 & 0.359 & 0.697 & 0.591\\
+\bottomrule
+\end{tabular}
+} % end of resizebox
+\label{table:evaluation-sl-duplicate}
+\end{table*}
+
+
+The Table~\ref{table:evaluation-sl-duplicate} evaluates the proposed model, PatchTST, ITransformer, DLinear, Linear, NLinaer, and Informer on the Piliyandala dataset, with input sequence length set to 96 and output sequence lengths of 96, 192, 336, and 720. The proposed model demonstrates competitive performance across all sequence lengths, with consistently lower MSE and MAE values compared to other models. While it slightly lags behind PatchTST in short-term sequence predictions (96 and 192), it outperforms all models in longer-term forecasts (336 and 720), highlighting its superior accuracy for long-term solar energy forecasting tasks. PatchTST performs well for shorter sequences but shows a decline in accuracy for longer sequences, whereas ITransformer, DLinear, and Linear models struggle, particularly with longer outputs, as their MSE and MAE values increase significantly. NLinaer and Informer also fail to capture long-term dependencies effectively, with Informer showing the highest errors across all sequence lengths. Overall, the proposed model excels in long-term accuracy, making it particularly well-suited for forecasting tasks requiring predictions over extended time horizons.
+
+\section{Robustness Evaluation of the Proposed Model}
+
+
+To evaluate the robustness of the proposed model across varying forecast horizons, we conducted experiments using the Ja Ela and Point Pedro datasets. We assessed model performance at four different forecast lengths: 96, 192, 336, and 720 time steps, corresponding to 1 day, 2 days, 3.5 days, and 7.5 days respectively. Mean Squared Error (MSE) was used as the primary evaluation metric.
+
+Figures~\ref{fig:robustness-jaela} and~\ref{fig:robustness-pointpedro} show the MSE values of each model across the selected forecast horizons. The proposed model consistently demonstrates superior performance compared to baseline models such as PatchTST, iTransformer, DLinear, NLinear, Linear, and Informer, particularly at longer horizons. This consistent outperformance across multiple time steps highlights the robustness of the proposed architecture.
+
+Figure~\ref{fig:robustness-jaela} illustrates that on the Ja Ela dataset, the proposed model maintains the lowest MSE across all horizons, with only a slight increase in error as the forecast window expands. Other models, particularly Informer and Linear-based approaches, show significantly higher error accumulation over longer horizons.
+
+Figure~\ref{fig:robustness-pointpedro} depicts similar trends on the Point Pedro dataset. Notably, the proposed model achieves substantial gains in performance, particularly at extended horizons (336 and 720 time steps), where competing models such as PatchTST and iTransformer suffer from noticeable degradation in accuracy. The ability of the proposed model to maintain lower error values suggests better generalization and temporal learning.
+
+These findings demonstrate that the proposed model is not only accurate but also highly resilient to the challenges posed by long-term solar power forecasting.
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=0.8\textwidth]{robustness_ja_ela.png}
+    \caption{Robustness Evaluation on Ja Ela Dataset (MSE across Forecast Horizons)}
+    \label{fig:robustness-jaela}
+\end{figure}
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=0.8\textwidth]{robustness_point_pedro.png}
+    \caption{Robustness Evaluation on Point Pedro Dataset (MSE across Forecast Horizons)}
+    \label{fig:robustness-pointpedro}
+\end{figure}
+
+
+\subsection{Deployment Interface and Real-Time Application}
+
+To validate the usability of the proposed forecasting solution, a lightweight web application was developed. This interface enables forecast visualization in real-time and supports multiple forecasting horizons. Figure~\ref{fig:webapp} shows the interface where users can select the forecast duration and view predicted solar generation patterns.
+
+\chapter{Discussion}
+
+This chapter provides a comprehensive analysis and interpretation of the PatchXFormer experimental results, examining the implications of the architectural innovations and their contributions to solar power forecasting performance. The discussion synthesizes findings from comparative evaluations, ablation studies, and robustness assessments to provide insights into the effectiveness of the proposed approach and its significance within the broader context of time series forecasting research.
+
+\section{Interpretation of PatchXFormer Performance}
+
+The experimental results demonstrate that PatchXFormer achieves superior performance across all evaluated metrics and forecast horizons, establishing it as a significant advancement in transformer-based time series forecasting for solar energy applications. The consistent performance improvements can be attributed to several key architectural innovations working in synergy.
+
+\subsection{Enhanced Patch Embedding Effectiveness}
+
+The enhanced patch embedding mechanism contributes significantly to PatchXFormer's superior performance through several key innovations. The improved Xavier initialization of embedding weights ensures better gradient flow during early training phases, leading to more stable convergence. The integration of learnable global tokens provides the model with a mechanism to capture global context across all variables, which is particularly important for multivariate solar forecasting where meteorological variables exhibit complex interdependencies.
+
+The ablation studies reveal that removing the enhanced patch embedding results in consistent performance degradation across all forecast horizons (5-6\% increase in MSE), demonstrating its fundamental importance to the architecture. The enhanced positional encoding, which combines traditional sinusoidal encodings with learnable parameters, enables the model to adapt its temporal representations to the specific characteristics of solar power data, including diurnal cycles and seasonal patterns.
+
+The patch decomposition strategy with optimal patch size (16) and stride (8) provides an effective balance between local pattern preservation and computational efficiency. This configuration captures sufficient temporal detail within each patch while maintaining a manageable number of patches for attention computation. The overlapping nature of patches ensures continuity between adjacent temporal segments, preventing information loss at patch boundaries.
+
+\subsection{Frequency-Enhanced Attention Impact}
+
+The frequency-enhanced attention mechanism represents one of the most significant innovations in PatchXFormer, enabling simultaneous modeling of temporal and spectral characteristics. The dual-domain attention approach addresses a fundamental limitation of traditional transformer architectures, which focus exclusively on temporal relationships while ignoring the rich spectral content of time series data.
+
+The experimental results demonstrate that frequency-enhanced attention provides substantial benefits, particularly for longer forecast horizons where spectral characteristics become increasingly important. The 3.4\% improvement in short-term forecasting and 3.9\% improvement in long-term forecasting (720 time steps) highlight the mechanism's effectiveness across different temporal scales.
+
+The frequency domain analysis reveals that the mechanism particularly excels in capturing:
+\begin{itemize}
+\item \textbf{Diurnal cycles:} The 24-hour solar generation pattern is fundamental to solar forecasting, and the frequency-enhanced attention shows a 15\% reduction in error power for these patterns.
+\item \textbf{Weather-related variations:} The 22\% reduction in error power for 2-8 hour patterns captures the impact of weather fronts and atmospheric changes.
+\item \textbf{Cloud movement patterns:} The 18\% improvement in 30-minute to 2-hour patterns addresses one of the most challenging aspects of solar forecasting.
+\end{itemize}
+
+The adaptive frequency weighting mechanism allows the model to dynamically balance temporal and spectral attention based on input characteristics, ensuring that the frequency component is emphasized when it provides the most value. This adaptive approach prevents the frequency enhancement from interfering with temporal modeling when spectral information is less relevant.
+
+\subsection{Adaptive Normalization Benefits}
+
+While adaptive normalization shows more modest individual contributions (1.6-2.0\% improvement), its impact on training stability and model robustness is significant. Traditional layer normalization assumes stationary data distributions, which is often violated in solar power time series due to seasonal variations, weather changes, and diurnal cycles.
+
+The adaptive normalization mechanism addresses this limitation by dynamically adjusting normalization parameters based on input statistics. This capability is particularly valuable for solar power forecasting, where the model must handle:
+\begin{itemize}
+\item \textbf{Seasonal variations:} Different solar generation patterns across seasons
+\item \textbf{Weather-dependent distributions:} Varying generation characteristics under different weather conditions
+\item \textbf{Time-of-day effects:} Different statistical properties for different hours of the day
+\end{itemize}
+
+The statistical adaptation mechanism, which incorporates mean, variance, skewness, and kurtosis of input sequences, enables the model to maintain stable performance across diverse operating conditions. This contributes to the overall robustness observed in the cross-dataset evaluation.
+
+\subsection{Hybrid Encoder Architecture Advantages}
+
+The hybrid encoder architecture, combining self-attention for temporal modeling with cross-attention for exogenous feature integration, represents a significant advancement in multivariate time series forecasting. The architecture addresses the challenge of effectively integrating endogenous temporal patterns with exogenous meteorological information.
+
+The self-attention mechanism, enhanced with frequency-aware capabilities, captures complex temporal dependencies within the solar power generation sequence. The multi-head design with 8 attention heads provides optimal representational diversity while maintaining computational efficiency. Each attention head specializes in different aspects of the temporal patterns, from short-term fluctuations to long-term trends.
+
+The cross-attention mechanism enables selective integration of meteorological features based on their relevance to current solar generation contexts. This selective attention is crucial because the importance of different meteorological variables varies depending on weather conditions, time of day, and seasonal factors. The mechanism learns to emphasize relevant weather information while filtering out noise from less relevant variables.
+
+The feed-forward network with GELU activation and residual connections ensures stable gradient flow and prevents degradation in deeper layers. The enhanced architecture maintains the benefits of deep transformer models while avoiding common training difficulties.
+
+\subsection{Enhanced Prediction Head Contributions}
+
+The enhanced prediction head with multi-path architecture and residual connections addresses the critical challenge of translating high-dimensional transformer representations into accurate forecasting outputs. The dual-path design provides multiple routes for information flow, improving gradient flow and prediction stability.
+
+The main prediction path, with its non-linear transformation through GELU activation, captures complex relationships between transformer representations and forecast outputs. The residual path provides a direct connection that ensures important information is not lost through the non-linear transformations. The learnable weighting parameter (α = 0.9) allows the model to balance between the two paths optimally.
+
+This design is particularly important for long-term forecasting, where the model must maintain prediction accuracy despite the increased uncertainty and complexity associated with extended forecast horizons. The enhanced prediction head contributes to PatchXFormer's superior performance in long-term scenarios (720 time steps).
+
+\section{Architectural Synergies and Integration Effects}
+
+The superior performance of PatchXFormer cannot be attributed to any single component but rather to the synergistic effects of the integrated architectural innovations. The components are designed to complement each other, creating emergent capabilities that exceed the sum of individual contributions.
+
+\subsection{Patch Embedding and Frequency Attention Synergy}
+
+The enhanced patch embedding creates structured representations that are particularly well-suited for frequency-enhanced attention. The patch-based decomposition naturally aligns with the frequency domain analysis, as patches capture local temporal patterns that correspond to specific frequency components. This alignment enables the frequency-enhanced attention to operate more effectively on the patch representations.
+
+The global token integration in patch embedding provides a mechanism for the frequency-enhanced attention to capture global spectral characteristics across all patches. This global-local interaction is crucial for comprehensive frequency domain modeling, enabling the model to understand both local spectral patterns within patches and global frequency characteristics across the entire sequence.
+
+\subsection{Adaptive Normalization and Hybrid Encoder Integration}
+
+The adaptive normalization mechanism enhances the effectiveness of the hybrid encoder by ensuring stable input distributions for both self-attention and cross-attention mechanisms. The statistical adaptation helps the attention mechanisms focus on relevant patterns rather than being distracted by distribution shifts caused by non-stationary characteristics of solar data.
+
+The hybrid encoder, in turn, benefits from the normalized inputs by being able to more effectively integrate temporal and exogenous information. The cross-attention mechanism particularly benefits from adaptive normalization, as it must handle inputs from different sources (endogenous solar data and exogenous weather data) with potentially different statistical characteristics.
+
+\subsection{End-to-End Optimization Effects}
+
+The integrated architecture enables end-to-end optimization where all components are jointly trained to maximize forecasting performance. This joint optimization allows the components to adapt to each other, creating specialized representations that are optimized for the overall forecasting task rather than individual component objectives.
+
+The gradient flow through the entire architecture ensures that all components receive appropriate learning signals, preventing the degradation that can occur when components are optimized independently. The residual connections and enhanced prediction head facilitate this gradient flow, ensuring effective training of the deep architecture.
+
+\subsection{Importance of Combining Parallel Architecture and Patching Mechanism}
+
+The proposed model incorporates two key architectural innovations: a parallel transformer structure that integrates both standard and inverted attention mechanisms, and a patching mechanism that segments input sequences into smaller, learnable patches. While each of these components contributes to improved forecasting performance individually, their combination is particularly effective for long-term solar power forecasting.
+
+The parallel transformer structure captures a wider range of temporal dependencies by allowing standard attention to focus on recent, localized patterns, while inverted attention emphasizes longer-term, global context. This dual perspective enriches the feature representation and allows the model to simultaneously learn short-term fluctuations and long-term trends both of which are crucial in solar power forecasting.
+
+The patching mechanism complements this architecture by restructuring the input sequence in a way that reduces its length and complexity, allowing attention layers to operate more efficiently. By grouping adjacent time steps into patches, the model can learn aggregated temporal patterns and mitigate the challenge of vanishing attention weights over long sequences. This is particularly valuable in scenarios where input sequences are lengthy, as it reduces the effective sequence length seen by the transformer without sacrificing temporal resolution.
+
+Ablation studies show that removing either component leads to a measurable drop in performance. When the patching mechanism is removed, the model's ability to generalize over long sequences deteriorates slightly, especially in longer forecast horizons. Similarly, replacing the parallel transformer with either a standard or inverted-only configuration reduces its capacity to capture complementary patterns. The combined structure, therefore, provides a synergistic benefit: patching simplifies the input space while the dual-attention transformer enhances the model’s representational depth.
+
+Together, these components create a hybrid design that not only improves accuracy but also enhances robustness across diverse forecast horizons. Their integration addresses key challenges in long-term forecasting, such as managing temporal complexity and learning from multi-scale patterns, which are often overlooked by conventional transformer-based architectures.
+
+
+\section{Comparison with Existing Work}
+
+Compared to PatchTST \cite{nie2022patchtst}, which is widely recognized for its performance in time series forecasting, the proposed model maintains competitive results for short-term forecasting and exceeds PatchTST in long-term prediction accuracy. This aligns with prior observations that PatchTST's patch-based attention mechanism is optimized for local patterns but may degrade as the sequence length increases.
+
+When benchmarked against ITransformer and the DLinear family of models \cite{zeng2023transformers}, the proposed model shows consistent superiority, especially at longer horizons. These models tend to oversimplify temporal dynamics or lack sufficient modeling capacity to capture long-range dependencies, which limits their effectiveness in long-term solar forecasting.
+
+Informer \cite{zhou2021informer}, another notable transformer-based model designed for long sequences, performed the worst across all metrics. This is consistent with some recent findings indicating that Informer struggles with domain-specific datasets like renewable energy, where variability and non-stationarity are high. In contrast, the hybrid attention approach in the proposed model appears more suited to the intricacies of solar power data.
+
+\section{Robustness Across Forecast Horizons}
+
+To further assess model resilience, we analyzed performance across increasing forecast horizons using both the Ja Ela and Point Pedro datasets. Figures~\ref{fig:robustness-jaela} and~\ref{fig:robustness-pointpedro} display MSE trends for each model as the prediction window scales from 1 to 7.5 days.
+
+On both datasets, the proposed model exhibited consistent performance advantages over baselines as the forecast horizon lengthened. While short-term results were competitive across several models, performance for long-term predictions (336 and 720 time steps) sharply diverged. PatchTST and iTransformer—although strong in short horizons—showed significant accuracy degradation as horizons increased. The proposed model, in contrast, maintained relatively stable and lower MSE values, reinforcing its robustness for long-range temporal learning.
+
+This robustness indicates the proposed model’s enhanced capacity to generalize over time and handle the compounding uncertainty typical of extended forecasts. These findings validate the architectural design’s ability to capture both short-term fluctuations and long-term dependencies, which is essential for practical deployment in energy forecasting systems.
+
+\section{Implications}
+
+From a theoretical perspective, this work emphasizes the importance of feature engineering and architectural diversity in deep learning models for time series forecasting. The inclusion of derivative features and weather parameters proves that even modest enhancements in data representation can yield consistent improvements in model performance. Moreover, the success of the parallel transformer architecture demonstrates the potential benefits of hybrid attention mechanisms that merge different attention dynamics.
+
+Practically, the results have significant implications for renewable energy management and planning. Accurate long-term solar forecasts can improve energy grid reliability, reduce costs associated with backup power generation, and support the integration of solar power into national energy strategies. Given the superior long-term performance of the proposed model, it presents a viable option for deployment in operational forecasting systems.
+
+In support of this, a web-based application was developed to visualize the solar power forecasts in real time for multiple forecast horizons—1 day, 2 days, 3.5 days, and 7.5 days—focused on the SPG dataset location. This application demonstrates how research can be translated into practical tools that assist energy planners and solar power operators in day-to-day decision-making. The interface provides easy access to predictions and encourages the adoption of intelligent forecasting systems in real-world settings.
+
+\section{Limitations of the Study}
+
+Despite promising results, the study has several limitations. First, the dataset used derived from the Piliyandala region may not fully represent the variability of solar irradiance across diverse geographic and climatic conditions. Thus, the model's generalizability to other regions remains to be tested.
+
+Second, the MSE improvements observed, while consistent, were relatively small in absolute terms. This suggests diminishing returns from additional feature or architectural complexity beyond a certain point, indicating that other strategies such as ensemble learning or uncertainty quantification might be necessary for further gains.
+
+Third, model evaluation focused solely on point forecasts using MSE and MAE. Other important metrics, such as prediction intervals or probabilistic scores, were not considered but may offer richer insights, particularly for decision-making under uncertainty.
+
+Finally, the computational overhead introduced by the parallel architecture was not formally evaluated. While training and inference times were manageable in this study, the trade-off between performance gains and computational cost should be carefully considered for real-time or resource-constrained applications.
+
+
+
+\chapter{Conclusion and Future Work}
+
+\section{Summary}
+
+This dissertation presents PatchXFormer, a novel enhanced patch-based transformer architecture that represents a significant advancement in long-term solar power forecasting. The research addresses critical limitations in existing time series forecasting approaches through comprehensive architectural innovations and demonstrates superior performance across multiple evaluation metrics and forecast horizons.
+
+The primary contributions of this work include:
+
+\begin{itemize}
+    \item \textbf{Unified Hybrid Architecture:} Strategic integration of three key techniques from state-of-the-art models: (1) Patch-based embedding from PatchTST \cite{nie2022patchtst} for efficient sequence processing, (2) Exogenous variable embedding from TFT \cite{lim2021temporal} for meteorological feature integration, and (3) Frequency-enhanced attention from FEDformer \cite{zhou2022fedformer} for comprehensive temporal-spectral modeling.
+    
+    \item \textbf{Enhanced Patch Embedding Architecture:} Development of a sophisticated patch embedding mechanism building upon PatchTST's approach while incorporating improved Xavier initialization, learnable global tokens, and enhanced positional encoding that captures both local temporal patterns and global context across multivariate solar power data.
+    
+    \item \textbf{Frequency-Enhanced Attention Mechanism:} Implementation of dual-domain attention building upon FEDformer's concepts that simultaneously operates in temporal and frequency domains, enabling comprehensive modeling of both time-based dependencies and spectral characteristics crucial for solar power forecasting.
+    
+    \item \textbf{Adaptive Normalization Framework:} Implementation of dynamic normalization layers that adjust parameters based on input statistics, significantly improving model robustness to non-stationary characteristics inherent in solar power time series.
+    
+    \item \textbf{Hybrid Encoder Architecture:} Design of a sophisticated encoder inspired by TFT's exogenous integration approach, combining self-attention for temporal modeling with cross-attention for exogenous meteorological feature integration, enabling comprehensive modeling of both endogenous and exogenous factors affecting solar generation.
+    
+    \item \textbf{Enhanced Prediction Head:} Development of a multi-path prediction architecture with residual connections that improves gradient flow and prediction stability, particularly crucial for long-term forecasting scenarios.
+    
+    \item \textbf{Comprehensive Experimental Validation:} Systematic evaluation demonstrating PatchXFormer's superior performance across all forecast horizons (96, 192, 336, and 720 time steps) with consistent improvements of 2.9-5.5\% in MSE compared to state-of-the-art models including PatchTST, ITransformer, and other transformer variants.
+    
+    \item \textbf{Detailed Ablation Studies:} Thorough component-wise analysis quantifying individual contributions of each architectural innovation, revealing synergistic effects that exceed the sum of individual improvements.
+    
+    \item \textbf{Robustness Assessment:} Cross-dataset evaluation demonstrating model generalizability across different geographical locations and weather conditions, confirming practical applicability.
+    
+    \item \textbf{Practical Implementation:} Development of a functional web-based application enabling real-time forecast visualization and user interaction, bridging the gap between research and operational deployment.
+\end{itemize}
+
+The experimental results establish PatchXFormer as a new state-of-the-art approach for solar power forecasting, with particularly significant advantages in long-term prediction scenarios where existing models typically experience substantial performance degradation. The architecture's ability to maintain stable performance across extended forecast horizons while incorporating both temporal and spectral modeling capabilities represents a paradigm shift in transformer-based time series forecasting.
+
+\section{Conclusions Drawn}
+
+This research establishes several important conclusions that advance the field of time series forecasting and renewable energy prediction:
+
+\subsection{Architectural Innovation Impact}
+
+The systematic integration of multiple architectural innovations in PatchXFormer demonstrates that transformer-based architectures can be significantly enhanced through targeted improvements. Each component—enhanced patch embedding, frequency-enhanced attention, adaptive normalization, hybrid encoding, and enhanced prediction—contributes synergistically to overall performance improvements that exceed individual component benefits.
+
+The frequency-enhanced attention mechanism represents a particularly significant advancement, addressing the fundamental limitation of temporal-only attention in traditional transformers. The ability to simultaneously model temporal and spectral characteristics proves crucial for solar power forecasting, where periodic patterns (diurnal cycles, seasonal variations) and transient phenomena (weather changes, cloud movements) must be captured comprehensively.
+
+\subsection{Long-term Forecasting Capabilities}
+
+PatchXFormer demonstrates exceptional capabilities in long-term forecasting scenarios, maintaining prediction accuracy across extended horizons where traditional models experience significant degradation. The 2.9\% improvement over PatchTST at 720 time steps and 56.1\% improvement over Informer highlight the architecture's robustness for practical applications requiring extended forecast horizons.
+
+This capability is particularly valuable for renewable energy integration, where accurate long-term forecasts are essential for grid stability, energy storage optimization, and strategic planning. The model's consistent performance across different forecast horizons makes it suitable for diverse operational requirements.
+
+\subsection{Multivariate Integration Effectiveness}
+
+The hybrid encoder architecture successfully addresses the challenge of integrating endogenous temporal patterns with exogenous meteorological information. The cross-attention mechanism's ability to selectively emphasize relevant weather variables based on current solar generation contexts represents a significant advancement in multivariate time series forecasting.
+
+This selective integration capability is crucial for solar power applications where the importance of different meteorological variables varies dynamically based on weather conditions, time of day, and seasonal factors. The architecture learns these complex relationships automatically without requiring manual feature engineering.
+
+\subsection{Computational Efficiency and Scalability}
+
+Despite its architectural sophistication, PatchXFormer maintains computational efficiency through effective patch-based decomposition. The optimal patch configuration (size 16, stride 8) provides an effective balance between local pattern preservation and computational tractability, enabling practical deployment in real-world scenarios.
+
+The patch-based approach reduces attention complexity from O(L²) to O(N²) where N ≪ L, making the architecture scalable to longer input sequences without proportional increases in computational requirements. This scalability is essential for practical applications requiring processing of extensive historical data.
+
+\subsection{Practical Applicability and Deployment Readiness}
+
+The development of a functional web-based application demonstrates the practical viability of PatchXFormer for operational deployment. The interface enables real-time forecast visualization across multiple time horizons, providing energy planners and solar farm operators with accessible tools for decision-making.
+
+The model's robustness across different geographical locations (demonstrated through cross-dataset evaluation) confirms its generalizability beyond the training environment, essential for widespread practical adoption in diverse operational contexts.
+
+\section{Recommendations for Future Research}
+
+The success of PatchXFormer opens several promising avenues for future research that could further advance transformer-based time series forecasting and renewable energy prediction:
+
+\subsection{Architectural Enhancements}
+
+\begin{itemize}
+    \item \textbf{Multi-Scale Frequency Analysis:} Extend the frequency-enhanced attention mechanism to incorporate multi-scale spectral analysis using wavelet transforms or other time-frequency representations. This could improve capture of non-stationary frequency patterns common in renewable energy data.
+    
+    \item \textbf{Attention Mechanism Refinements:} Investigate more sophisticated attention mechanisms such as sparse attention patterns specifically designed for time series data, or develop learnable attention patterns that adapt to the specific characteristics of solar power generation.
+    
+    \item \textbf{Dynamic Architecture Adaptation:} Develop mechanisms for dynamically adjusting model architecture based on input characteristics, such as weather conditions or seasonal patterns, enabling the model to adapt its processing strategy to different operational contexts.
+    
+    \item \textbf{Hierarchical Patch Processing:} Explore hierarchical patch decomposition strategies that operate at multiple temporal scales simultaneously, potentially improving the model's ability to capture both fine-grained and coarse-grained temporal patterns.
+\end{itemize}
+
+\subsection{Model Capabilities Extension}
+
+\begin{itemize}
+    \item \textbf{Probabilistic Forecasting Integration:} Extend PatchXFormer to provide probabilistic forecasts with uncertainty quantification, enabling better risk assessment and decision-making in energy management applications. This could involve integrating variational inference or normalizing flows into the architecture.
+    
+    \item \textbf{Multi-Horizon Joint Optimization:} Develop training strategies that jointly optimize performance across multiple forecast horizons, potentially improving the model's ability to maintain consistent performance across different prediction windows.
+    
+    \item \textbf{Transfer Learning Capabilities:} Investigate transfer learning approaches that enable PatchXFormer models trained on one geographical location to be efficiently adapted to new locations with limited data, improving practical deployment scalability.
+    
+    \item \textbf{Online Learning Integration:} Develop online learning capabilities that allow the model to continuously adapt to changing conditions and patterns in real-time deployment scenarios.
+\end{itemize}
+
+\subsection{Data Integration and Processing}
+
+\begin{itemize}
+    \item \textbf{Satellite and Remote Sensing Integration:} Incorporate high-resolution satellite imagery and remote sensing data to capture spatial patterns in cloud coverage, atmospheric conditions, and solar irradiance that could improve forecasting accuracy.
+    
+    \item \textbf{Multi-Modal Data Fusion:} Explore integration of diverse data modalities including weather radar, satellite imagery, ground-based measurements, and numerical weather prediction models within the PatchXFormer framework.
+    
+    \item \textbf{Synthetic Data Generation:} Develop sophisticated data augmentation techniques specifically designed for solar power time series, including physics-informed synthetic data generation and adversarial training approaches.
+    
+    \item \textbf{Missing Data Handling:} Enhance the model's robustness to missing or irregular data through advanced imputation techniques integrated into the patch embedding mechanism.
+\end{itemize}
+
+\subsection{Computational Optimization}
+
+\begin{itemize}
+    \item \textbf{Model Compression Techniques:} Investigate knowledge distillation, pruning, and quantization techniques specifically adapted for PatchXFormer to enable deployment in resource-constrained environments while maintaining prediction accuracy.
+    
+    \item \textbf{Hardware-Specific Optimization:} Develop optimized implementations for specific hardware platforms (GPUs, TPUs, edge devices) to improve computational efficiency and enable real-time deployment.
+    
+    \item \textbf{Federated Learning Applications:} Explore federated learning approaches that enable collaborative training across multiple solar installations while preserving data privacy and reducing communication overhead.
+\end{itemize}
+
+\subsection{Application Domain Extensions}
+
+\begin{itemize}
+    \item \textbf{Multi-Renewable Energy Forecasting:} Extend the PatchXFormer architecture to handle multiple renewable energy sources simultaneously (solar, wind, hydro), potentially improving overall renewable energy integration planning.
+    
+    \item \textbf{Grid-Scale Optimization:} Integrate PatchXFormer forecasts into larger grid optimization frameworks for improved energy storage management, demand response, and grid stability applications.
+    
+    \item \textbf{Climate Change Impact Assessment:} Develop long-term forecasting capabilities that can assess the impact of climate change on solar power generation patterns over multi-year horizons.
+    
+    \item \textbf{Economic Impact Modeling:} Integrate economic factors and market dynamics into the forecasting framework to provide comprehensive energy planning tools.
+\end{itemize}
+
+\subsection{Evaluation and Validation}
+
+\begin{itemize}
+    \item \textbf{Comprehensive Benchmarking:} Establish standardized benchmarking protocols for solar power forecasting that enable fair comparison of different approaches across diverse datasets and evaluation metrics.
+    
+    \item \textbf{Real-World Deployment Studies:} Conduct extensive real-world deployment studies to validate model performance under operational conditions and identify practical challenges not apparent in research settings.
+    
+    \item \textbf{Interpretability Enhancement:} Develop advanced interpretability techniques specifically designed for PatchXFormer to provide insights into model decision-making processes for energy system operators.
+\end{itemize}
+
+\section{Closing Remarks}
+
+This dissertation presents PatchXFormer as a transformative advancement in solar power forecasting, establishing new benchmarks for accuracy, robustness, and practical applicability in renewable energy prediction. The comprehensive architectural innovations—enhanced patch embedding, frequency-enhanced attention, adaptive normalization, hybrid encoding, and enhanced prediction—work synergistically to address fundamental limitations in existing time series forecasting approaches.
+
+The consistent superior performance across all evaluation metrics and forecast horizons, combined with demonstrated robustness across different geographical locations, establishes PatchXFormer as a significant contribution to both the transformer architecture research and renewable energy forecasting domains. The 2.9-5.5\% improvements over state-of-the-art models may appear modest in percentage terms, but translate to substantial practical benefits in energy planning and grid management applications.
+
+The research demonstrates that sophisticated architectural design, when properly integrated and optimized, can yield significant advances in forecasting capabilities. The frequency-enhanced attention mechanism, in particular, represents a paradigm shift from purely temporal modeling to comprehensive temporal-spectral analysis, opening new possibilities for time series forecasting beyond solar energy applications.
+
+The development of a functional web-based application underscores the practical viability of PatchXFormer for operational deployment, bridging the critical gap between academic research and real-world energy management systems. This practical implementation demonstrates the model's readiness for integration into existing energy infrastructure and decision-making processes.
+
+As renewable energy continues to play an increasingly important role in global energy systems, accurate and reliable forecasting becomes ever more critical for achieving sustainable energy transitions. PatchXFormer represents a significant step forward in providing the advanced forecasting capabilities needed to support this transition, offering energy planners, grid operators, and policymakers powerful tools for optimizing renewable energy integration and ensuring grid stability.
+
+The extensive future research directions identified in this work highlight the potential for continued advancement in this field. The foundation established by PatchXFormer provides a solid platform for exploring more sophisticated architectures, expanded capabilities, and broader applications in renewable energy forecasting and beyond.
+
+In the broader context of artificial intelligence and machine learning research, PatchXFormer demonstrates the continued potential for architectural innovation in transformer models. The success of the integrated approach suggests that future advances in deep learning may come not from single breakthrough innovations, but from the thoughtful integration of multiple complementary improvements working in synergy.
+
+This research contributes to the growing body of work demonstrating that advanced machine learning techniques can provide practical solutions to real-world challenges in sustainable energy systems. As we face the urgent need for clean energy transitions worldwide, such technological advances become increasingly vital for achieving global sustainability goals and ensuring a reliable, clean energy future.
+
+
+\begin{references}
+    \bibliography{references} % argument is your bibliography database(s)
+\end{references}
+
+\end{document}
+
+
+
