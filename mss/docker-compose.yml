@@ -1,0 +1,179 @@
+services:
+
+  # ─── REVERSE PROXY ──────────────────────────────────────────
+  traefik:
+    image: traefik:v3.1
+    container_name: gamevault-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - gamevault
+    depends_on:
+      - backend
+      - frontend
+
+  # ─── BACKEND API ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: gamevault-backend
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - gamevault
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_started
+      minio:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/ws`)"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.service=api"
+      - "traefik.http.routers.api.priority=100"
+      - "traefik.http.services.api.loadbalancer.server.port=8000"
+
+  # ─── CELERY WORKER ──────────────────────────────────────────
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: gamevault-celery-worker
+    restart: unless-stopped
+    command: celery -A app.tasks worker --loglevel=info --concurrency=4
+    env_file: .env
+    networks:
+      - gamevault
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  # ─── CELERY BEAT (scheduler) ─────────────────────────────────
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: gamevault-celery-beat
+    restart: unless-stopped
+    command: celery -A app.tasks beat --loglevel=info
+    env_file: .env
+    networks:
+      - gamevault
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # ─── FRONTEND ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: gamevault-frontend
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - gamevault
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.web.entrypoints=web"
+      - "traefik.http.routers.web.service=web"
+      - "traefik.http.routers.web.priority=1"
+      - "traefik.http.services.web.loadbalancer.server.port=3000"
+
+  # ─── DATABASE ────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: gamevault-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - gamevault
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─── CACHE / BROKER ─────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: gamevault-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - gamevault
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ─── SEARCH ENGINE ──────────────────────────────────────────
+  meilisearch:
+    image: getmeili/meilisearch:v1.9
+    container_name: gamevault-meilisearch
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_ENV: ${MEILI_ENV:-development}
+    volumes:
+      - meili_data:/meili_data
+    networks:
+      - gamevault
+
+  # ─── OBJECT STORAGE ─────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: gamevault-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - gamevault
+
+networks:
+  gamevault:
+    name: gamevault
+
+volumes:
+  postgres_data:
+  redis_data:
+  meili_data:
+  minio_data:
